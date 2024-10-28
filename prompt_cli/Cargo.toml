@@ -1,0 +1,29 @@
+[package]
+authors.workspace = true
+categories = ["command-line-utilities", "database"]
+description = "Hello"
+edition.workspace = true
+keywords.workspace = true
+license.workspace = true
+name = "prompt_cli"
+version.workspace = true
+
+
+[dependencies]
+clap = { workspace = true }
+libc = { workspace = true }
+nix = { workspace = true, default-features = false, features = [
+    "fs",
+    "ioctl",
+    "poll",
+    "signal",
+    "term",
+] }
+prompt_toolkit = { path = "../prompt_toolkit", version = "0.1.0" }
+tracing = { workspace = true }
+tracing-appender = { workspace = true }
+tracing-subscriber = { workspace = true }
+
+[[bin]]
+name = "prompt"
+path = "src/main.rs"
