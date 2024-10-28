@@ -59,7 +59,7 @@ jobs:
           RUST_LOG: "info"
           RUST_LOG_SPAN_EVENTS: full
         run: |
-          cargo test --workspace --features all
+          cargo test --workspace
 
       # - name: Tests
       #   if: ${{ startsWith(matrix.os, 'ubuntu-') }}

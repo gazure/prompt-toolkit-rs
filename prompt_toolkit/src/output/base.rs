@@ -22,7 +22,7 @@ pub enum CursorShape {
     BlinkingUnderline,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum AnsiColor {
     Default,
     Black,
@@ -380,5 +380,55 @@ impl Output for DummyOutput {
 
     fn get_default_color_depth() -> ColorDepth {
         ColorDepth::Monochrome
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_cursor_shapes() {
+        let mut out = DummyOutput;
+
+        // NeverChange should not affect the cursor shape
+        out.set_cursor_shape(CursorShape::NeverChange);
+
+        // Test all cursor shape variants
+        out.set_cursor_shape(CursorShape::Block);
+        out.set_cursor_shape(CursorShape::Beam);
+        out.set_cursor_shape(CursorShape::Underline);
+        out.set_cursor_shape(CursorShape::BlinkingBlock);
+        out.set_cursor_shape(CursorShape::BlinkingBeam);
+        out.set_cursor_shape(CursorShape::BlinkingUnderline);
+
+        // Reset should restore default cursor shape
+        out.reset_cursor_shape();
+    }
+
+    #[test]
+    fn test_str_to_ansi_color() {
+        // Test valid colors
+        assert_eq!(
+            AnsiColor::try_from_str("ansidefault"),
+            Some(AnsiColor::Default)
+        );
+        assert_eq!(AnsiColor::try_from_str("ansiblack"), Some(AnsiColor::Black));
+        assert_eq!(AnsiColor::try_from_str("ansired"), Some(AnsiColor::Red));
+        assert_eq!(AnsiColor::try_from_str("ansiblue"), Some(AnsiColor::Blue));
+        assert_eq!(
+            AnsiColor::try_from_str("ansibrightred"),
+            Some(AnsiColor::BrightRed)
+        );
+        assert_eq!(
+            AnsiColor::try_from_str("ansibrightblue"),
+            Some(AnsiColor::BrightBlue)
+        );
+
+        // Test invalid colors
+        assert_eq!(AnsiColor::try_from_str(""), None);
+        assert_eq!(AnsiColor::try_from_str("red"), None);
+        assert_eq!(AnsiColor::try_from_str("invalid"), None);
+        assert_eq!(AnsiColor::try_from_str("bright_red"), None);
     }
 }

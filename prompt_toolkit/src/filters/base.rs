@@ -66,8 +66,8 @@ impl Filter {
     }
 }
 
+#[cfg(test)]
 mod test {
-    #[cfg(test)]
     use super::*;
 
     #[test]
