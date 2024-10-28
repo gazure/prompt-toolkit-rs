@@ -6,7 +6,7 @@ use tracing::{error, warn};
 use crate::output::Output;
 use std::os::{fd::BorrowedFd, unix::io::RawFd};
 
-use super::{output::Attrs, ColorDepth, CursorShape};
+use super::{base::Attrs, ColorDepth, CursorShape};
 
 #[derive(Debug)]
 pub struct VT100 {
@@ -192,7 +192,7 @@ impl Output for VT100 {
         self.flush();
     }
 
-    fn get_size(&self) -> super::output::Size {
+    fn get_size(&self) -> super::base::Size {
         let mut ws = winsize {
             ws_row: 0,
             ws_col: 0,
@@ -201,12 +201,12 @@ impl Output for VT100 {
         };
         unsafe {
             if ioctl(self.out, TIOCGWINSZ, &mut ws) == 0 {
-                super::output::Size {
+                super::base::Size {
                     rows: ws.ws_row as usize,
                     columns: ws.ws_col as usize,
                 }
             } else {
-                super::output::Size {
+                super::base::Size {
                     rows: 0,
                     columns: 0,
                 }

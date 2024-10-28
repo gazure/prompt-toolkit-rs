@@ -86,7 +86,7 @@ impl<O: Output> Renderer<O> {
 }
 
 fn get_max_column_index(row: &HashMap<usize, Char>, width: usize) -> usize {
-    row.keys().max().map(|k| *k).unwrap_or(width - 1)
+    row.keys().max().copied().unwrap_or(width - 1)
 }
 
 fn move_cursor(
@@ -100,7 +100,7 @@ fn move_cursor(
         let newlines = "\r\n".repeat(new.y - current_position.y);
         output.write(&newlines);
         current_position.x = 0;
-        output.cursor_forward(new.x as usize);
+        output.cursor_forward(new.x);
         return new;
     }
     if new.y < current_position.y {

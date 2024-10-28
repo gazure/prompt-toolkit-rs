@@ -154,7 +154,7 @@ pub enum Keys {
     Vt100MouseEvent,
     WindowsMouseEvent,
     BracketedPaste,
-    SIGINT,
+    SigInt,
     Ignore,
 }
 
@@ -311,7 +311,7 @@ impl Keys {
             Keys::Vt100MouseEvent => "<vt100-mouse-event>",
             Keys::WindowsMouseEvent => "<windows-mouse-event>",
             Keys::BracketedPaste => "<bracketed-paste>",
-            Keys::SIGINT => "<sigint>",
+            Keys::SigInt => "<sigint>",
             Keys::Ignore => "<ignore>",
         }
     }
@@ -470,7 +470,7 @@ pub static ALL_KEYS: LazyLock<Vec<&'static str>> = LazyLock::new(|| {
         Keys::Vt100MouseEvent.as_str(),
         Keys::WindowsMouseEvent.as_str(),
         Keys::BracketedPaste.as_str(),
-        Keys::SIGINT.as_str(),
+        Keys::SigInt.as_str(),
         Keys::Ignore.as_str(),
     ];
     v

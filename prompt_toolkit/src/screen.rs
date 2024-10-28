@@ -156,7 +156,7 @@ impl Screen {
     pub fn append_style_to_content(&mut self, style: &str) {
         for row in self.data_buffer.values_mut() {
             for cell in row.values_mut() {
-                cell.style.push_str(" ");
+                cell.style.push(' ');
                 cell.style.push_str(style);
             }
         }

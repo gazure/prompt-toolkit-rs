@@ -1,5 +1,5 @@
 pub mod ansi_escape_sequences;
-mod input;
+mod base;
 mod vt100;
 
-pub use input::Input;
+pub use base::Input;

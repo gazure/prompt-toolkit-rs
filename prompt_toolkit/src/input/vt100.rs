@@ -24,7 +24,7 @@ pub struct VT100 {
 
 impl VT100 {
     pub fn new(in_fd: RawFd) -> Self {
-        let fileno = in_fd.clone();
+        let fileno = in_fd;
         Self {
             in_fd,
             fileno,
