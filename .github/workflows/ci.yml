@@ -1,0 +1,73 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Checks
+    uses: ./.github/workflows/checks.yml
+
+  build:
+    name: ${{ matrix.platform }}
+    needs: [ checks ]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - linux-x64
+          - macos-arm64
+          - macos-x64
+
+        include:
+          - platform: linux-x64
+            os: ubuntu-24.04
+          - platform: macos-arm64
+            os: macos-14
+          - platform: macos-x64
+            os: macos-13
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+
+      # - name: Install cargo-llvm-cov
+      #   uses: taiki-e/install-action@main
+      #   with:
+      #     tool: cargo-llvm-cov
+
+      - name: Tests
+        # if: ${{ !startsWith(matrix.os, 'ubuntu-') }}
+        env:
+          CARGO_TERM_COLOR: always
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          RUST_BACKTRACE: 1
+          RUST_LOG: "info"
+          RUST_LOG_SPAN_EVENTS: full
+        run: |
+          cargo test --workspace --features all
+
+      # - name: Tests
+      #   if: ${{ startsWith(matrix.os, 'ubuntu-') }}
+      #   env:
+      #     CARGO_TERM_COLOR: always
+      #     GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+      #     RUST_BACKTRACE: 1
+      #     RUST_LOG: "info"
+      #     RUST_LOG_SPAN_EVENTS: full
+      #   run: |
+      #     cargo llvm-cov --workspace --lcov --output-path lcov.info
