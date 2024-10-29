@@ -1,4 +1,3 @@
-#![expect(dead_code)]
 use std::{collections::HashMap, sync::LazyLock};
 
 use crate::keys::Keys;

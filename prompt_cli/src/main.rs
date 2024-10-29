@@ -1,7 +1,7 @@
 use std::{fs::OpenOptions, os::fd::IntoRawFd, path::PathBuf};
 
 use nix::unistd::isatty;
-use prompt_toolkit::{render, Output, WritePosition, VT100};
+use prompt_toolkit::{render, Output, Input, WritePosition, output::VT100 as VT100Output, input::VT100 as VT100Input};
 use tracing::{info, Level};
 use tracing_appender::rolling::Rotation;
 use tracing_subscriber::{
@@ -27,7 +27,7 @@ fn main() {
         .init();
 
     let tty = OpenOptions::new().read(true).write(true).open("/dev/tty");
-    let (_in_fd, _is_in_tty, out, _is_out_tty, _close_on_drop) = if let Ok(tty) = tty {
+    let (in_fd, _is_in_tty, out, _is_out_tty, _close_on_drop) = if let Ok(tty) = tty {
         info!("susing dev/tty");
         let fd = tty.into_raw_fd();
         let is_a_tty = is_tty(fd);
@@ -42,13 +42,23 @@ fn main() {
             false,
         )
     };
-    let mut output = VT100::new(out);
+    let mut input = VT100Input::new(in_fd);
+    let mut output = VT100Output::new(out);
+
+    output.set_title("Prompt Toolkit mini-demo");
+    std::thread::sleep(std::time::Duration::from_secs(10));
+
+    let key_presses = input.read_keys();
+    let mut additional = String::new();
+    for key_press in key_presses {
+        additional.push_str(key_press.text());
+    }
 
     let size = output.get_size();
     let mut screen = prompt_toolkit::Screen::new(None, size.columns, 1);
     let wp = WritePosition::new(0, 0, size.columns, 1);
-    let data = "Hello, terminal";
+    let data = format!("Hello, terminal, you entered: {}", additional);
     output.set_title("Prompt Toolkit RS");
-    screen.direct_draw(&wp, data);
+    screen.direct_draw(&wp, &data);
     render::output_screen(&mut output, &screen, &size);
 }

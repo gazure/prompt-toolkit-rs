@@ -173,13 +173,13 @@ impl Output for VT100 {
             CursorShape::BlinkingBlock => "\x1b[1 q",
             CursorShape::BlinkingBeam => "\x1b[5 q",
             CursorShape::BlinkingUnderline => "\x1b[3 q",
-            _ => "",
+            CursorShape::NeverChange => "",
         };
         self.write_raw(shape_code);
     }
 
     fn reset_cursor_shape(&mut self) {
-        self.write_raw("\x1b[0 q")
+        self.write_raw("\x1b[0 q");
     }
 
     fn supports_cursor_position_requests(&self) -> bool {

@@ -18,3 +18,4 @@ nix = { workspace = true, default-features = false, features = [
     "signal",
     "term",
 ] }
+utf8-decode = { workspace = true }

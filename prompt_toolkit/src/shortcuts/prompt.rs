@@ -1,1 +1,1 @@
-pub struct PromptSession;
+pub struct Session;

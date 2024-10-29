@@ -2,8 +2,9 @@
 
 use std::{collections::HashMap, sync::LazyLock};
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum Keys {
+    Character(char),
     Escape,
     ShiftEscape,
     ControlAt,
@@ -159,8 +160,10 @@ pub enum Keys {
 }
 
 impl Keys {
-    pub fn as_str(&self) -> &'static str {
+    #[allow(clippy::too_many_lines)]
+    pub fn as_str(self) -> &'static str {
         match self {
+            Keys::Character(_) => "",
             Keys::Escape => "escape",
             Keys::ShiftEscape => "s-escape",
             Keys::ControlAt => "c-@",

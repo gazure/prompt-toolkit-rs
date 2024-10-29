@@ -1,34 +1,31 @@
 #![expect(dead_code)]
 
-use std::os::fd::RawFd;
-use std::sync::LazyLock;
-
-use regex::Regex;
+use tracing::warn;
 
 pub use crate::input::Input;
+use std::os::fd::RawFd;
 
-static CURSOR_POSITION_RESPONSE_PREFIX_REGEX: LazyLock<Regex> =
-    LazyLock::new(|| regex::Regex::new(r"^\x1b\[[\d;]*$").expect("valid regex"));
-
-pub struct KeyPress {
-    key: String,
-    data: String,
-}
+use super::base::KeyPress;
+use super::posix_utils::PosixStdinReader;
+use super::vt100_parser::Parser;
 
 pub struct VT100 {
     in_fd: RawFd,
     fileno: i32,
     buffer: Vec<KeyPress>,
+    reader: PosixStdinReader,
     parser: Parser,
 }
 
 impl VT100 {
+    #[must_use]
     pub fn new(in_fd: RawFd) -> Self {
         let fileno = in_fd;
         Self {
             in_fd,
             fileno,
             buffer: Vec::new(),
+            reader: PosixStdinReader::new(in_fd),
             parser: Parser::new(),
         }
     }
@@ -36,19 +33,26 @@ impl VT100 {
 
 impl Input for VT100 {
     fn fileno(&self) -> i32 {
-        todo!()
+        self.fileno
     }
 
-    fn typeahead_hash(&self) -> &str {
-        todo!()
+    fn typeahead_hash(&self) -> String {
+        format!("fd-{}", self.fileno())
     }
 
-    fn read_keys(&mut self) -> Vec<String> {
-        todo!()
+    fn read_keys(&mut self) -> Vec<KeyPress> {
+        match self.reader.read(1024) {
+            Ok(data) => self.parser.feed(&data),
+            Err(e) => {warn!("Got an error when trying to read: {e}"); vec![]},
+        }
+    }
+
+    fn flush_keys(&mut self) -> Vec<KeyPress> {
+        self.parser.flush()
     }
 
     fn closed(&self) -> bool {
-        todo!()
+        self.reader.closed()
     }
 
     fn to_raw_mode(&mut self) {
@@ -58,50 +62,5 @@ impl Input for VT100 {
     fn to_cooked_mode(&mut self) {
         todo!()
     }
-}
 
-struct Parser {
-    in_bracketed_paste: bool,
-}
-
-impl Parser {
-    pub fn new() -> Self {
-        Self {
-            in_bracketed_paste: false,
-        }
-    }
-
-    pub fn feed(&self, _buffer: &mut [KeyPress], _data: &str) {}
-}
-
-struct ParserStateMachine {
-    prefix: String,
-    retry: bool,
-    flush: bool,
-}
-
-enum StateMachineInput {
-    Character(String),
-    Flush,
-}
-
-impl ParserStateMachine {
-    pub fn new() -> Self {
-        Self {
-            prefix: String::new(),
-            retry: false,
-            flush: false,
-        }
-    }
-
-    pub fn send(&mut self, c: StateMachineInput) {
-        match c {
-            StateMachineInput::Flush => self.flush = true,
-            StateMachineInput::Character(c) => {
-                self.prefix.push_str(&c);
-            }
-        }
-
-        if !self.prefix.is_empty() {}
-    }
 }
