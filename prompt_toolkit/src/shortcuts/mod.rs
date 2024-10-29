@@ -1,3 +1,3 @@
 mod prompt;
 
-pub use prompt::PromptSession;
+pub use prompt::Session;

@@ -1,5 +1,8 @@
 pub mod ansi_escape_sequences;
 mod base;
-mod vt100;
+pub(crate) mod posix_utils;
+pub(crate) mod vt100;
+pub(crate) mod vt100_parser;
 
-pub use base::Input;
+pub use base::{Input, KeyPress};
+pub use vt100::VT100;

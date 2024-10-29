@@ -21,6 +21,7 @@ tracing = "0.1.40"
 tracing-appender = "0.2.3"
 tracing-subscriber = "0.3.18"
 unicode-width = "0.2.0"
+utf8-decode = "1.0.1"
 
 [profile.release]
 codegen-units = 1

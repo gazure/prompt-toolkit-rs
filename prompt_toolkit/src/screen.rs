@@ -49,7 +49,7 @@ impl Char {
         ]);
 
         let (c, style) = if let Some(mapped) = display_mappings.get(&c) {
-            (mapped.to_string(), style.to_string())
+            ((*mapped).to_string(), style.to_string())
         } else {
             (c.to_string(), style.to_string())
         };
@@ -90,6 +90,7 @@ pub struct Screen {
 }
 
 impl Screen {
+    #[must_use]
     pub fn new(default_char: Option<Char>, initial_width: usize, initial_height: usize) -> Self {
         let default_char = default_char.unwrap_or_else(|| Char::new(' ', "[transparent]"));
         Screen {
@@ -106,10 +107,12 @@ impl Screen {
         }
     }
 
+    #[must_use]
     pub fn default_char(&self) -> Char {
         self.default_char.clone()
     }
 
+    #[must_use]
     pub fn show_cursor(&self) -> bool {
         self.show_cursor
     }
@@ -122,18 +125,20 @@ impl Screen {
         self.menu_positions.insert(window, position);
     }
 
+    #[must_use]
     pub fn get_cursor_position(&self, window: &Window) -> Point {
         self.cursor_positions
             .get(window)
-            .cloned()
+            .copied()
             .unwrap_or(Point::new(0, 0))
     }
 
+    #[must_use]
     pub fn get_menu_position(&self, window: &Window) -> Point {
         self.menu_positions
             .get(window)
-            .cloned()
-            .or_else(|| self.cursor_positions.get(window).cloned())
+            .copied()
+            .or_else(|| self.cursor_positions.get(window).copied())
             .unwrap_or(Point::new(0, 0))
     }
 
@@ -172,9 +177,9 @@ impl Screen {
         let y_range = write_position.ypos..(write_position.ypos + write_position.height);
 
         let (append_style, prepend_style) = if after {
-            (format!(" {}", style), String::new())
+            (format!(" {style}"), String::new())
         } else {
-            (String::new(), format!("{} ", style))
+            (String::new(), format!("{style} "))
         };
 
         for y in y_range {
@@ -210,6 +215,7 @@ impl Screen {
         }
     }
 
+    #[must_use]
     pub fn buffer_representation(&self) -> String {
         let mut result = String::new();
         for y in 0..self.height {
@@ -234,6 +240,7 @@ pub struct Point {
 }
 
 impl Point {
+    #[must_use]
     pub fn new(x: usize, y: usize) -> Self {
         Point { x, y }
     }
@@ -247,6 +254,7 @@ pub struct WritePosition {
 }
 
 impl WritePosition {
+    #[must_use]
     pub fn new(xpos: usize, ypos: usize, width: usize, height: usize) -> Self {
         WritePosition {
             xpos,
