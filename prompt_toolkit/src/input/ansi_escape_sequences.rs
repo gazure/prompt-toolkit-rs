@@ -307,3 +307,43 @@ pub static ANSI_SEQUENCES: LazyLock<HashMap<&'static str, Vec<Keys>>> = LazyLock
 
     map
 });
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_escape_codes() {
+        let seq = &ANSI_SEQUENCES;
+
+        assert_eq!(seq.get("\x1b"), Some(&vec![Keys::Escape]));
+        assert_eq!(seq.get("\x1b[A"), Some(&vec![Keys::Up]));
+        assert_eq!(seq.get("\x1b[B"), Some(&vec![Keys::Down]));
+        assert_eq!(seq.get("\x1b[C"), Some(&vec![Keys::Right]));
+        assert_eq!(seq.get("\x1b[D"), Some(&vec![Keys::Left]));
+        assert_eq!(seq.get("\x1b[H"), Some(&vec![Keys::Home]));
+        assert_eq!(seq.get("\x1b[F"), Some(&vec![Keys::End]));
+    }
+
+    #[test]
+    fn test_control_codes() {
+        let seq = &ANSI_SEQUENCES;
+
+        assert_eq!(seq.get("\x00"), Some(&vec![Keys::ControlAt]));
+        assert_eq!(seq.get("\x01"), Some(&vec![Keys::ControlA]));
+        assert_eq!(seq.get("\x02"), Some(&vec![Keys::ControlB]));
+        assert_eq!(seq.get("\x03"), Some(&vec![Keys::ControlC]));
+        assert_eq!(seq.get("\x04"), Some(&vec![Keys::ControlD]));
+    }
+
+    #[test]
+    fn test_function_keys() {
+        let seq = &ANSI_SEQUENCES;
+
+        assert_eq!(seq.get("\x1bOP"), Some(&vec![Keys::F1]));
+        assert_eq!(seq.get("\x1bOQ"), Some(&vec![Keys::F2]));
+        assert_eq!(seq.get("\x1bOR"), Some(&vec![Keys::F3]));
+        assert_eq!(seq.get("\x1bOS"), Some(&vec![Keys::F4]));
+        assert_eq!(seq.get("\x1b[15~"), Some(&vec![Keys::F5]));
+    }
+}
