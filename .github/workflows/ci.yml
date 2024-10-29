@@ -45,13 +45,13 @@ jobs:
         with:
           toolchain: stable
 
-      # - name: Install cargo-llvm-cov
-      #   uses: taiki-e/install-action@main
-      #   with:
-      #     tool: cargo-llvm-cov
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@main
+        with:
+          tool: cargo-llvm-cov
 
       - name: Tests
-        # if: ${{ !startsWith(matrix.os, 'ubuntu-') }}
+        if: ${{ !startsWith(matrix.os, 'ubuntu-') }}
         env:
           CARGO_TERM_COLOR: always
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
@@ -61,13 +61,23 @@ jobs:
         run: |
           cargo test --workspace
 
-      # - name: Tests
-      #   if: ${{ startsWith(matrix.os, 'ubuntu-') }}
-      #   env:
-      #     CARGO_TERM_COLOR: always
-      #     GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-      #     RUST_BACKTRACE: 1
-      #     RUST_LOG: "info"
-      #     RUST_LOG_SPAN_EVENTS: full
-      #   run: |
-      #     cargo llvm-cov --workspace --lcov --output-path lcov.info
+      - name: Tests
+        if: ${{ startsWith(matrix.os, 'ubuntu-') }}
+        env:
+          CARGO_TERM_COLOR: always
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          RUST_BACKTRACE: 1
+          RUST_LOG: "info"
+          RUST_LOG_SPAN_EVENTS: full
+        run: |
+          cargo llvm-cov --workspace --lcov --output-path lcov.info
+
+      - name: Upload to codecov.io
+        if: ${{ startsWith(matrix.os, 'ubuntu-') }}
+        uses: codecov/codecov-action@v4
+        with:
+          files: lcov.info
+          fail_ci_if_error: true
+          verbose: true
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
