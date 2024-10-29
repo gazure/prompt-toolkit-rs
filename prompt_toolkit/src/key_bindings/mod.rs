@@ -1,3 +1,3 @@
-mod bindings;
+mod base;
 
-pub use bindings::KeyBindings;
+pub use base::KeyBindings;

@@ -43,7 +43,10 @@ impl Input for VT100 {
     fn read_keys(&mut self) -> Vec<KeyPress> {
         match self.reader.read(1024) {
             Ok(data) => self.parser.feed(&data),
-            Err(e) => {warn!("Got an error when trying to read: {e}"); vec![]},
+            Err(e) => {
+                warn!("Got an error when trying to read: {e}");
+                vec![]
+            }
         }
     }
 
@@ -62,5 +65,4 @@ impl Input for VT100 {
     fn to_cooked_mode(&mut self) {
         todo!()
     }
-
 }

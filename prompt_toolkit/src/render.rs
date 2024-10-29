@@ -76,6 +76,7 @@ impl<O: Output> Renderer<O> {
     }
 
     /// TODO: handle async flow for Cursor Position Requests/Responses
+    #[expect(clippy::unused_self)]
     pub fn request_absolute_cursor_position(&self) {}
 
     pub fn render(&mut self, app: &Application, layout: &Layout, is_done: bool) {

@@ -15,6 +15,7 @@ pub struct VT100 {
 }
 
 impl VT100 {
+    #[must_use]
     pub fn new(out: RawFd) -> Self {
         Self {
             out,
@@ -33,8 +34,8 @@ impl Output for VT100 {
     }
 
     fn write(&mut self, data: &str) {
-        let sanitized = data.replace("\x1b", "?");
-        self.write_raw(&sanitized)
+        let sanitized = data.replace('\x1b', "?");
+        self.write_raw(&sanitized);
     }
 
     fn write_raw(&mut self, data: &str) {
@@ -45,8 +46,8 @@ impl Output for VT100 {
     fn set_title(&mut self, title: &str) {
         self.write_raw(&format!(
             "\x1b]2;{}\x07",
-            title.replace("\x1b", "").replace("\x07", "")
-        ))
+            title.replace(['\x1b', '\x07'], "")
+        ));
     }
 
     fn clear_title(&mut self) {
@@ -77,15 +78,15 @@ impl Output for VT100 {
     }
 
     fn erase_screen(&mut self) {
-        self.write_raw("\x1b[2J")
+        self.write_raw("\x1b[2J");
     }
 
     fn enter_alternate_screen(&mut self) {
-        self.write_raw("\x1b[?1049h\x1b[H")
+        self.write_raw("\x1b[?1049h\x1b[H");
     }
 
     fn quit_alternate_screen(&mut self) {
-        self.write_raw("\x1b[?1049l")
+        self.write_raw("\x1b[?1049l");
     }
 
     fn enable_mouse_support(&mut self) {
@@ -109,15 +110,15 @@ impl Output for VT100 {
     }
 
     fn erase_end_of_line(&mut self) {
-        self.write_raw("\x1b[K")
+        self.write_raw("\x1b[K");
     }
 
     fn erase_down(&mut self) {
-        self.write_raw("\x1b[J")
+        self.write_raw("\x1b[J");
     }
 
     fn reset_attributes(&mut self) {
-        self.write_raw("\x1b[0m")
+        self.write_raw("\x1b[0m");
     }
 
     fn set_attributes(&mut self, attrs: Attrs, color_depth: ColorDepth) {
@@ -126,31 +127,31 @@ impl Output for VT100 {
     }
 
     fn disable_autowrap(&mut self) {
-        self.write_raw("\x1b[?7l")
+        self.write_raw("\x1b[?7l");
     }
 
     fn enable_autowrap(&mut self) {
-        self.write_raw("\x1b[?7h")
+        self.write_raw("\x1b[?7h");
     }
 
     fn cursor_goto(&mut self, row: usize, column: usize) {
-        self.write_raw(&format!("\x1b[{};{}H", row, column))
+        self.write_raw(&format!("\x1b[{row};{column}H"));
     }
 
     fn cursor_up(&mut self, count: usize) {
-        self.write_raw(&format!("\x1b[{}A", count));
+        self.write_raw(&format!("\x1b[{count}A"));
     }
 
     fn cursor_down(&mut self, count: usize) {
-        self.write_raw(&format!("\x1b[{}B", count));
+        self.write_raw(&format!("\x1b[{count}B"));
     }
 
     fn cursor_forward(&mut self, count: usize) {
-        self.write_raw(&format!("\x1b[{}C", count));
+        self.write_raw(&format!("\x1b[{count}C"));
     }
 
     fn cursor_back(&mut self, count: usize) {
-        self.write_raw(&format!("\x1b[{}D", count));
+        self.write_raw(&format!("\x1b[{count}D"));
     }
 
     fn hide_cursor(&mut self) {

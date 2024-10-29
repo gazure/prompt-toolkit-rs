@@ -89,8 +89,7 @@ impl AnsiColor {
 
     pub fn to_rgb(&self) -> (u8, u8, u8) {
         match self {
-            AnsiColor::Default => (0, 0, 0), // Default to black
-            AnsiColor::Black => (0, 0, 0),
+            AnsiColor::Default | AnsiColor::Black => (0, 0, 0), // Default to black
             AnsiColor::Red => (205, 0, 0),
             AnsiColor::Green => (0, 205, 0),
             AnsiColor::Yellow => (205, 205, 0),
@@ -142,6 +141,7 @@ pub enum ColorDepth {
 }
 
 impl ColorDepth {
+    #[must_use]
     pub fn bit_depth(&self) -> usize {
         match self {
             ColorDepth::Monochrome => 1,
@@ -159,9 +159,9 @@ impl ColorDepth {
         {
             if digits.len() == 6 {
                 let r = (
-                    (digits[0] * 16 + digits[1]) as u8,
-                    (digits[2] * 16 + digits[3]) as u8,
-                    (digits[4] * 16 + digits[5]) as u8,
+                    u8::try_from(digits[0] * 16 + digits[1]).expect("should never overflow"),
+                    u8::try_from(digits[2] * 16 + digits[3]).expect("should never overflow"),
+                    u8::try_from(digits[4] * 16 + digits[5]).expect("should never overflow"),
                 );
                 Some(r)
             } else {
@@ -188,9 +188,9 @@ impl ColorDepth {
                     "5".to_string(),
                     format!(
                         "{}",
-                        16 + ((r as u16 * 6 / 256) * 36
-                            + (g as u16 * 6 / 256) * 6
-                            + (b as u16 * 6 / 256))
+                        16 + ((u16::from(r) * 6 / 256) * 36
+                            + (u16::from(g) * 6 / 256) * 6
+                            + (u16::from(b) * 6 / 256))
                     ),
                 ]
             }
@@ -223,6 +223,7 @@ impl ColorDepth {
         self.depth_code_from_rgb(color)
     }
 
+    #[must_use]
     pub fn escape_code(&self, attrs: Attrs) -> String {
         let mut parts: Vec<String> = Vec::new();
         parts.extend(self.colors_to_code(&attrs.color.unwrap_or_default(), false));
@@ -249,15 +250,16 @@ impl ColorDepth {
             parts.push("9".to_string());
         }
 
-        if !parts.is_empty() {
-            format!("\x1b[0;{}m", parts.join(";"))
-        } else {
+        if parts.is_empty() {
             "\x1b[0m".to_string()
+        } else {
+            format!("\x1b[0;{}m", parts.join(";"))
         }
     }
 }
 
 #[derive(Debug, Default)]
+#[expect(clippy::struct_excessive_bools)]
 pub struct Attrs {
     pub color: Option<String>,
     pub background_color: Option<String>,

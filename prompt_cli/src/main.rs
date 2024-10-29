@@ -1,7 +1,9 @@
 use std::{fs::OpenOptions, os::fd::IntoRawFd, path::PathBuf};
 
 use nix::unistd::isatty;
-use prompt_toolkit::{render, Output, Input, WritePosition, output::VT100 as VT100Output, input::VT100 as VT100Input};
+use prompt_toolkit::{
+    input::VT100 as VT100Input, output::VT100 as VT100Output, render, Input, Output, WritePosition,
+};
 use tracing::{info, Level};
 use tracing_appender::rolling::Rotation;
 use tracing_subscriber::{

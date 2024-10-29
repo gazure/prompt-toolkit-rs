@@ -13,10 +13,7 @@ pub struct PosixStdinReader {
 
 impl PosixStdinReader {
     pub fn new(fd: RawFd) -> Self {
-        Self {
-            fd,
-            closed: false,
-        }
+        Self { fd, closed: false }
     }
 
     pub fn closed(&self) -> bool {
@@ -45,22 +42,24 @@ impl PosixStdinReader {
             Ok(n) if n < 0 => {
                 self.closed = true;
                 return Err(io::Error::last_os_error());
-            },
+            }
             Ok(0) => {
                 info!("no FDs were ready!");
-                return Ok(String::default())},
+                return Ok(String::default());
+            }
             Ok(_) => {}
             Err(e) => {
                 self.closed = true;
-                return Err(io::Error::from(e))
-            },
+                return Err(io::Error::from(e));
+            }
         }
 
         let mut buf = vec![0u8; count];
 
         unsafe {
             // todo async
-            let bytes_read = libc::read(self.fd, buf.as_mut_ptr().cast::<libc::c_void>() , buf.len());
+            let bytes_read =
+                libc::read(self.fd, buf.as_mut_ptr().cast::<libc::c_void>(), buf.len());
             if bytes_read < 0 {
                 Err(io::Error::last_os_error())
             } else {

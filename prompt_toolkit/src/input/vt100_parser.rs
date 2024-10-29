@@ -60,9 +60,8 @@ impl Parser {
                 if self.in_bracketed_paste {
                     results.extend(self.feed(&data[i..]));
                     break;
-                } else {
-                    results.extend(self.send(StateMachineInput::Character(c)));
                 }
+                results.extend(self.send(StateMachineInput::Character(c)));
             }
         }
 
@@ -245,10 +244,7 @@ mod test {
 
         let results = parser.feed("\x1b[A");
         assert_eq!(results.len(), 1);
-        assert_eq!(
-            results[0],
-            KeyPress::new(Keys::Up, "\x1b[A".to_string())
-        );
+        assert_eq!(results[0], KeyPress::new(Keys::Up, "\x1b[A".to_string()));
 
         let results = parser.feed("\x1b[200~clipboard\x1b[201~");
         assert_eq!(results.len(), 1);

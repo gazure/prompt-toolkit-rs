@@ -5,10 +5,10 @@ mod filters;
 mod key_bindings;
 mod screen;
 
-pub mod output;
-pub mod render;
 pub mod application;
 pub mod input;
+pub mod output;
+pub mod render;
 pub mod shortcuts;
 
 pub(crate) mod keys;
