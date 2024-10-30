@@ -4,7 +4,7 @@
 use std::collections::HashMap;
 
 use crate::{
-    application::Application, layout::Layout, output::Attrs, Char, Output, Point, Screen, Size,
+    application::Application, layout::Layout, styles::Style, Char, Output, Point, Screen, Size,
 };
 
 #[derive(Debug)]
@@ -12,28 +12,6 @@ enum CPRSupport {
     Unknown,
     Supported,
     Unsupported,
-}
-
-pub trait Style {
-    fn get_attrs(&self, style_str: &str, default: Attrs) -> Attrs;
-    fn style_rules(&self) -> Vec<(String, String)>;
-    fn invalidation_hash(&self) -> u64;
-}
-
-struct DummyStyle;
-
-impl Style for DummyStyle {
-    fn get_attrs(&self, _style_str: &str, default: Attrs) -> Attrs {
-        default
-    }
-
-    fn style_rules(&self) -> Vec<(String, String)> {
-        vec![]
-    }
-
-    fn invalidation_hash(&self) -> u64 {
-        1
-    }
 }
 
 struct Renderer<O: Output> {

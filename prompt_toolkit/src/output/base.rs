@@ -1,4 +1,4 @@
-#![expect(dead_code)]
+use crate::styles::{AnsiColor, Attrs};
 
 pub struct Size {
     pub rows: usize,
@@ -20,116 +20,6 @@ pub enum CursorShape {
     BlinkingBlock,
     BlinkingBeam,
     BlinkingUnderline,
-}
-
-#[derive(Debug, PartialEq, Eq)]
-pub enum AnsiColor {
-    Default,
-    Black,
-    Red,
-    Green,
-    Yellow,
-    Blue,
-    Magenta,
-    Cyan,
-    White,
-    BrightBlack,
-    BrightRed,
-    BrightGreen,
-    BrightYellow,
-    BrightBlue,
-    BrightMagenta,
-    BrightCyan,
-    BrightWhite,
-}
-
-impl AnsiColor {
-    pub fn to_code(&self) -> i32 {
-        match self {
-            AnsiColor::Default => 0,
-            AnsiColor::Black => 30,
-            AnsiColor::Red => 31,
-            AnsiColor::Green => 32,
-            AnsiColor::Yellow => 33,
-            AnsiColor::Blue => 34,
-            AnsiColor::Magenta => 35,
-            AnsiColor::Cyan => 36,
-            AnsiColor::White => 37,
-            AnsiColor::BrightBlack => 90,
-            AnsiColor::BrightRed => 91,
-            AnsiColor::BrightGreen => 92,
-            AnsiColor::BrightYellow => 93,
-            AnsiColor::BrightBlue => 94,
-            AnsiColor::BrightMagenta => 95,
-            AnsiColor::BrightCyan => 96,
-            AnsiColor::BrightWhite => 97,
-        }
-    }
-    pub fn to_background_code(&self) -> i32 {
-        match self {
-            AnsiColor::Default => 0,
-            AnsiColor::Black => 40,
-            AnsiColor::Red => 41,
-            AnsiColor::Green => 42,
-            AnsiColor::Yellow => 43,
-            AnsiColor::Blue => 44,
-            AnsiColor::Magenta => 45,
-            AnsiColor::Cyan => 46,
-            AnsiColor::White => 47,
-            AnsiColor::BrightBlack => 100,
-            AnsiColor::BrightRed => 101,
-            AnsiColor::BrightGreen => 102,
-            AnsiColor::BrightYellow => 103,
-            AnsiColor::BrightBlue => 104,
-            AnsiColor::BrightMagenta => 105,
-            AnsiColor::BrightCyan => 106,
-            AnsiColor::BrightWhite => 107,
-        }
-    }
-
-    pub fn to_rgb(&self) -> (u8, u8, u8) {
-        match self {
-            AnsiColor::Default | AnsiColor::Black => (0, 0, 0), // Default to black
-            AnsiColor::Red => (205, 0, 0),
-            AnsiColor::Green => (0, 205, 0),
-            AnsiColor::Yellow => (205, 205, 0),
-            AnsiColor::Blue => (0, 0, 238),
-            AnsiColor::Magenta => (205, 0, 205),
-            AnsiColor::Cyan => (0, 205, 205),
-            AnsiColor::White => (229, 229, 229),
-            AnsiColor::BrightBlack => (127, 127, 127),
-            AnsiColor::BrightRed => (255, 0, 0),
-            AnsiColor::BrightGreen => (0, 255, 0),
-            AnsiColor::BrightYellow => (255, 255, 0),
-            AnsiColor::BrightBlue => (92, 92, 255),
-            AnsiColor::BrightMagenta => (255, 0, 255),
-            AnsiColor::BrightCyan => (0, 255, 255),
-            AnsiColor::BrightWhite => (255, 255, 255),
-        }
-    }
-
-    pub fn try_from_str(s: &str) -> Option<Self> {
-        match s {
-            "ansidefault" => Some(Self::Default),
-            "ansiblack" => Some(Self::Black),
-            "ansired" => Some(Self::Red),
-            "ansigreen" => Some(Self::Green),
-            "ansiyellow" => Some(Self::Yellow),
-            "ansiblue" => Some(Self::Blue),
-            "ansimagenta" => Some(Self::Magenta),
-            "ansicyan" => Some(Self::Cyan),
-            "ansiwhite" => Some(Self::White),
-            "ansibrightblack" => Some(Self::BrightBlack),
-            "ansibrightred" => Some(Self::BrightRed),
-            "ansibrightgreen" => Some(Self::BrightGreen),
-            "ansibrightyellow" => Some(Self::BrightYellow),
-            "ansibrightblue" => Some(Self::BrightBlue),
-            "ansibrightmagenta" => Some(Self::BrightMagenta),
-            "ansibrightcyan" => Some(Self::BrightCyan),
-            "ansibrightwhite" => Some(Self::BrightWhite),
-            _ => None,
-        }
-    }
 }
 
 #[derive(Debug)]
@@ -180,6 +70,7 @@ impl ColorDepth {
         match self {
             Self::Monochrome => vec![],
             Self::Ansi => {
+                // TODO: find nearest AnsiColor
                 vec![AnsiColor::Black.to_code().to_string()]
             }
             Self::Default => {
@@ -211,7 +102,7 @@ impl ColorDepth {
             return Vec::new();
         }
 
-        if let Some(ansi_color) = AnsiColor::try_from_str(color) {
+        if let Ok(ansi_color) = AnsiColor::try_from(color) {
             let color = if is_background {
                 ansi_color.to_background_code()
             } else {
@@ -228,25 +119,25 @@ impl ColorDepth {
         let mut parts: Vec<String> = Vec::new();
         parts.extend(self.colors_to_code(&attrs.color.unwrap_or_default(), false));
         parts.extend(self.colors_to_code(&attrs.background_color.unwrap_or_default(), true));
-        if attrs.bold {
+        if attrs.bold.is_on() {
             parts.push("1".to_string());
         }
-        if attrs.italic {
+        if attrs.italic.is_on() {
             parts.push("3".to_string());
         }
-        if attrs.blink {
+        if attrs.blink.is_on() {
             parts.push("5".to_string());
         }
-        if attrs.underline {
+        if attrs.underline.is_on() {
             parts.push("4".to_string());
         }
-        if attrs.reverse {
+        if attrs.reverse.is_on() {
             parts.push("7".to_string());
         }
-        if attrs.hidden {
+        if attrs.hidden.is_on() {
             parts.push("8".to_string());
         }
-        if attrs.strike {
+        if attrs.strike.is_on() {
             parts.push("9".to_string());
         }
 
@@ -256,20 +147,6 @@ impl ColorDepth {
             format!("\x1b[0;{}m", parts.join(";"))
         }
     }
-}
-
-#[derive(Debug, Default)]
-#[expect(clippy::struct_excessive_bools)]
-pub struct Attrs {
-    pub color: Option<String>,
-    pub background_color: Option<String>,
-    pub bold: bool,
-    pub underline: bool,
-    pub strike: bool,
-    pub italic: bool,
-    pub blink: bool,
-    pub reverse: bool,
-    pub hidden: bool,
 }
 
 pub trait Output {
@@ -406,31 +283,5 @@ mod test {
 
         // Reset should restore default cursor shape
         out.reset_cursor_shape();
-    }
-
-    #[test]
-    fn test_str_to_ansi_color() {
-        // Test valid colors
-        assert_eq!(
-            AnsiColor::try_from_str("ansidefault"),
-            Some(AnsiColor::Default)
-        );
-        assert_eq!(AnsiColor::try_from_str("ansiblack"), Some(AnsiColor::Black));
-        assert_eq!(AnsiColor::try_from_str("ansired"), Some(AnsiColor::Red));
-        assert_eq!(AnsiColor::try_from_str("ansiblue"), Some(AnsiColor::Blue));
-        assert_eq!(
-            AnsiColor::try_from_str("ansibrightred"),
-            Some(AnsiColor::BrightRed)
-        );
-        assert_eq!(
-            AnsiColor::try_from_str("ansibrightblue"),
-            Some(AnsiColor::BrightBlue)
-        );
-
-        // Test invalid colors
-        assert_eq!(AnsiColor::try_from_str(""), None);
-        assert_eq!(AnsiColor::try_from_str("red"), None);
-        assert_eq!(AnsiColor::try_from_str("invalid"), None);
-        assert_eq!(AnsiColor::try_from_str("bright_red"), None);
     }
 }

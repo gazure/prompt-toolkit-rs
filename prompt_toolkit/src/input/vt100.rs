@@ -66,3 +66,42 @@ impl Input for VT100 {
         todo!()
     }
 }
+
+#[cfg(test)]
+mod test {
+
+    use super::*;
+    use crate::keys::Keys;
+
+    #[test]
+    fn test_single_char() {
+        let mut vt = VT100::new(0);
+        let keys = vt.parser.feed("x");
+        assert_eq!(keys.len(), 1);
+        assert_eq!(
+            keys[0],
+            KeyPress::new(Keys::Character('x'), "x".to_string())
+        );
+    }
+
+    #[test]
+    fn test_escape_seq() {
+        let mut vt = VT100::new(0);
+        let keys = vt.parser.feed("\x1b[A");
+        assert_eq!(keys, vec![KeyPress::new(Keys::Up, "\x1B[A".to_string())]);
+    }
+
+    // #[test]
+    // fn test_escape() {
+    //     let mut vt = VT100::new(0);
+    //     let keys = vt.parser.feed("\x1b");
+    //     assert_eq!(keys, vec![KeyPress::new(Keys::Escape, "\x1B".to_string())]);
+    // }
+
+    #[test]
+    fn test_invalid_seq() {
+        let mut vt = VT100::new(0);
+        let keys = vt.parser.feed("\x1b[");
+        assert_eq!(keys, vec![]);
+    }
+}
