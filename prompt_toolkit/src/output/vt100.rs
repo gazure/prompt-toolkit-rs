@@ -4,9 +4,10 @@ use nix::unistd::write;
 use tracing::{error, warn};
 
 use crate::output::Output;
+use crate::styles::Attrs;
 use std::os::{fd::BorrowedFd, unix::io::RawFd};
 
-use super::{base::Attrs, ColorDepth, CursorShape};
+use super::{ColorDepth, CursorShape};
 
 #[derive(Debug)]
 pub struct VT100 {
