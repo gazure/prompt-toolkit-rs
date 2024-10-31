@@ -48,7 +48,7 @@ fn main() {
     let mut output = VT100Output::new(out);
 
     output.set_title("Prompt Toolkit mini-demo");
-    std::thread::sleep(std::time::Duration::from_secs(10));
+    std::thread::sleep(std::time::Duration::from_secs(5));
 
     let key_presses = input.read_keys();
     let mut additional = String::new();
@@ -57,10 +57,36 @@ fn main() {
     }
 
     let size = output.get_size();
-    let mut screen = prompt_toolkit::Screen::new(None, size.columns, 1);
-    let wp = WritePosition::new(0, 0, size.columns, 1);
-    let data = format!("Hello, terminal, you entered: {}", additional);
-    output.set_title("Prompt Toolkit RS");
-    screen.direct_draw(&wp, &data);
+    let mut screen = prompt_toolkit::Screen::new(None, size.columns, 10);
+    let mut wp = WritePosition::new(0, 0, size.columns, 1);
+    let data = format!("You entered (raw mode not enabled): {}", additional);
+    screen.direct_draw(&wp, &data, "bold");
+    wp.ypos += 1;
+    screen.direct_draw(&wp, "italic", "italic");
+    wp.ypos += 1;
+    screen.direct_draw(
+        &wp,
+        "Ansi blue background with Ansi red characters",
+        "bg:ansiblue fg:ansired",
+    );
+    wp.ypos += 1;
+    screen.direct_draw(
+        &wp,
+        "greyer text and background using #RRGGBB",
+        "bg:#111111 fg:#BBBBBB",
+    );
+    wp.ypos += 1;
+    screen.direct_draw(&wp, "strike", "strike");
+    wp.ypos += 1;
+    screen.direct_draw(&wp, "underline", "underline");
+    wp.ypos += 1;
+    screen.direct_draw(&wp, "blink", "blink");
+    wp.ypos += 1;
+    screen.direct_draw(&wp, "reverse (inverted colors)", "reverse");
+    wp.ypos += 1;
+    screen.direct_draw(&wp, "hidden", "hidden");
+    wp.xpos += 6;
+    screen.direct_draw(&wp, "<- there is hidden text there", "nohidden");
+
     render::output_screen(&mut output, &screen, &size);
 }

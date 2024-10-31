@@ -1,4 +1,5 @@
 #![deny(clippy::pedantic)]
+#![expect(clippy::module_name_repetitions)]
 
 pub(crate) mod clipboard;
 pub(crate) mod filters;
