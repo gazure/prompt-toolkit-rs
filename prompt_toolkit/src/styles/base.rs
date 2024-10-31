@@ -1,6 +1,13 @@
 #![expect(dead_code)]
 
-use std::{error::Error, fmt::Display};
+use crate::styles::{AnsiColor, Color};
+use anyhow::Result;
+use regex::Regex;
+use std::{collections::HashSet, default, error::Error, fmt::Display, sync::LazyLock};
+use tracing::warn;
+
+static CLASS_NAMES_REGEX: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"^[a-z0-9.\s_-]*$").expect("valid regex"));
 
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq)]
 pub enum AttrSetting {
@@ -24,10 +31,10 @@ impl AttrSetting {
     }
 }
 
-#[derive(Debug, Default, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Attrs {
-    pub color: Option<String>,
-    pub background_color: Option<String>,
+    pub color: Option<Color>,
+    pub background_color: Option<Color>,
     pub bold: AttrSetting,
     pub underline: AttrSetting,
     pub strike: AttrSetting,
@@ -37,153 +44,95 @@ pub struct Attrs {
     pub hidden: AttrSetting,
 }
 
+impl Default for Attrs {
+    fn default() -> Self {
+        Self {
+            color: Some(Color::default()),
+            background_color: Some(Color::default()),
+            bold: AttrSetting::Disabled,
+            underline: AttrSetting::Disabled,
+            strike: AttrSetting::Disabled,
+            italic: AttrSetting::Disabled,
+            blink: AttrSetting::Disabled,
+            reverse: AttrSetting::Disabled,
+            hidden: AttrSetting::Disabled,
+        }
+    }
+}
+
 impl Attrs {
     pub fn merge(attrs: &[Self]) -> Self {
-        let mut default = Self::default();
-        for attr in attrs.iter().rev() {
-            if default.color.is_none() {
-                default.color.clone_from(&attr.color);
+        let mut empty = Self::empty();
+        let default_attr = Self::default();
+        let mut attrs_to_merge = vec![&default_attr];
+        attrs_to_merge.extend(attrs);
+        for attr in attrs_to_merge.iter().rev() {
+            if empty.color.is_none() {
+                empty.color.clone_from(&attr.color);
             }
-            if default.background_color.is_none() {
-                default.background_color.clone_from(&attr.background_color);
+            if empty.background_color.is_none() {
+                empty.background_color.clone_from(&attr.background_color);
             }
-            default.bold = default.bold.merge(attr.bold);
-            default.underline = default.underline.merge(attr.underline);
-            default.strike = default.strike.merge(attr.strike);
-            default.italic = default.italic.merge(attr.italic);
-            default.blink = default.blink.merge(attr.blink);
-            default.reverse = default.reverse.merge(attr.reverse);
-            default.hidden = default.hidden.merge(attr.hidden);
+            empty.bold = empty.bold.merge(attr.bold);
+            empty.underline = empty.underline.merge(attr.underline);
+            empty.strike = empty.strike.merge(attr.strike);
+            empty.italic = empty.italic.merge(attr.italic);
+            empty.blink = empty.blink.merge(attr.blink);
+            empty.reverse = empty.reverse.merge(attr.reverse);
+            empty.hidden = empty.hidden.merge(attr.hidden);
         }
 
-        default
+        empty
     }
-}
 
-#[derive(Debug)]
-pub struct AnsiColorParseError(String);
-impl Error for AnsiColorParseError {}
-impl Display for AnsiColorParseError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "No ansi color found for {}", self.0)
-    }
-}
-
-#[derive(Debug, PartialEq, Eq)]
-pub enum AnsiColor {
-    Default,
-    Black,
-    Red,
-    Green,
-    Yellow,
-    Blue,
-    Magenta,
-    Cyan,
-    White,
-    BrightBlack,
-    BrightRed,
-    BrightGreen,
-    BrightYellow,
-    BrightBlue,
-    BrightMagenta,
-    BrightCyan,
-    BrightWhite,
-}
-
-impl AnsiColor {
-    pub fn to_code(&self) -> i32 {
-        match self {
-            AnsiColor::Default => 0,
-            AnsiColor::Black => 30,
-            AnsiColor::Red => 31,
-            AnsiColor::Green => 32,
-            AnsiColor::Yellow => 33,
-            AnsiColor::Blue => 34,
-            AnsiColor::Magenta => 35,
-            AnsiColor::Cyan => 36,
-            AnsiColor::White => 37,
-            AnsiColor::BrightBlack => 90,
-            AnsiColor::BrightRed => 91,
-            AnsiColor::BrightGreen => 92,
-            AnsiColor::BrightYellow => 93,
-            AnsiColor::BrightBlue => 94,
-            AnsiColor::BrightMagenta => 95,
-            AnsiColor::BrightCyan => 96,
-            AnsiColor::BrightWhite => 97,
-        }
-    }
-    pub fn to_background_code(&self) -> i32 {
-        match self {
-            AnsiColor::Default => 0,
-            AnsiColor::Black => 40,
-            AnsiColor::Red => 41,
-            AnsiColor::Green => 42,
-            AnsiColor::Yellow => 43,
-            AnsiColor::Blue => 44,
-            AnsiColor::Magenta => 45,
-            AnsiColor::Cyan => 46,
-            AnsiColor::White => 47,
-            AnsiColor::BrightBlack => 100,
-            AnsiColor::BrightRed => 101,
-            AnsiColor::BrightGreen => 102,
-            AnsiColor::BrightYellow => 103,
-            AnsiColor::BrightBlue => 104,
-            AnsiColor::BrightMagenta => 105,
-            AnsiColor::BrightCyan => 106,
-            AnsiColor::BrightWhite => 107,
+    pub fn empty() -> Self {
+        Self {
+            color: None,
+            background_color: None,
+            bold: AttrSetting::Automatic,
+            underline: AttrSetting::Automatic,
+            strike: AttrSetting::Automatic,
+            italic: AttrSetting::Automatic,
+            blink: AttrSetting::Automatic,
+            reverse: AttrSetting::Automatic,
+            hidden: AttrSetting::Automatic,
         }
     }
 
-    pub fn to_rgb(&self) -> (u8, u8, u8) {
-        match self {
-            AnsiColor::Default | AnsiColor::Black => (0, 0, 0), // Default to black
-            AnsiColor::Red => (205, 0, 0),
-            AnsiColor::Green => (0, 205, 0),
-            AnsiColor::Yellow => (205, 205, 0),
-            AnsiColor::Blue => (0, 0, 238),
-            AnsiColor::Magenta => (205, 0, 205),
-            AnsiColor::Cyan => (0, 205, 205),
-            AnsiColor::White => (229, 229, 229),
-            AnsiColor::BrightBlack => (127, 127, 127),
-            AnsiColor::BrightRed => (255, 0, 0),
-            AnsiColor::BrightGreen => (0, 255, 0),
-            AnsiColor::BrightYellow => (255, 255, 0),
-            AnsiColor::BrightBlue => (92, 92, 255),
-            AnsiColor::BrightMagenta => (255, 0, 255),
-            AnsiColor::BrightCyan => (0, 255, 255),
-            AnsiColor::BrightWhite => (255, 255, 255),
+    pub fn from_style_string(style: &str) -> Self {
+        let mut attr = if style.contains("noinherit") {
+            Attrs::default()
+        } else {
+            Attrs::empty()
+        };
+
+        for part in style.split_whitespace() {
+            match part {
+                "bold" => attr.bold = AttrSetting::Enabled,
+                "nobold" => attr.bold = AttrSetting::Disabled,
+                "italic" => attr.italic = AttrSetting::Enabled,
+                "noitalic" => attr.italic = AttrSetting::Disabled,
+                "underline" => attr.underline = AttrSetting::Enabled,
+                "nounderline" => attr.underline = AttrSetting::Disabled,
+                "strike" => attr.strike = AttrSetting::Enabled,
+                "nostrike" => attr.strike = AttrSetting::Disabled,
+                "blink" => attr.blink = AttrSetting::Enabled,
+                "noblink" => attr.blink = AttrSetting::Disabled,
+                "reverse" => attr.reverse = AttrSetting::Enabled,
+                "noreverse" => attr.reverse = AttrSetting::Disabled,
+                "hidden" => attr.hidden = AttrSetting::Enabled,
+                "nohidden" => attr.hidden = AttrSetting::Disabled,
+                background_color if background_color.starts_with("bg:") => {
+                    attr.background_color = background_color[3..].parse().ok();
+                }
+                foreground_color if foreground_color.starts_with("fg:") => {
+                    attr.color = foreground_color[3..].parse().ok();
+                }
+                _ => {} // TODO: optional "fg:" prefix
+            }
         }
-    }
 
-    fn try_from_str(s: &str) -> Option<Self> {
-        match s {
-            "ansidefault" => Some(Self::Default),
-            "ansiblack" => Some(Self::Black),
-            "ansired" | "ansidarkred" => Some(Self::Red),
-            "ansigreen" | "ansidarkgreen" => Some(Self::Green),
-            "ansiyellow" | "ansibrown" => Some(Self::Yellow),
-            "ansiblue" | "ansidarkblue" => Some(Self::Blue),
-            "ansimagenta" | "ansipurple" => Some(Self::Magenta),
-            "ansicyan" | "ansiteal" => Some(Self::Cyan),
-            "ansiwhite" | "ansilightgray" => Some(Self::White),
-            "ansibrightblack" | "ansidarkgray" => Some(Self::BrightBlack),
-            "ansibrightred" => Some(Self::BrightRed),
-            "ansibrightgreen" => Some(Self::BrightGreen),
-            "ansibrightyellow" => Some(Self::BrightYellow),
-            "ansibrightblue" => Some(Self::BrightBlue),
-            "ansibrightmagenta" | "ansifuchsia" => Some(Self::BrightMagenta),
-            "ansibrightcyan" | "ansiturquoise" => Some(Self::BrightCyan),
-            "ansibrightwhite" => Some(Self::BrightWhite),
-            _ => None,
-        }
-    }
-}
-
-impl TryFrom<&str> for AnsiColor {
-    type Error = AnsiColorParseError;
-
-    fn try_from(s: &str) -> Result<Self, Self::Error> {
-        Self::try_from_str(s).ok_or_else(|| AnsiColorParseError(s.to_string()))
+        attr
     }
 }
 
@@ -242,8 +191,84 @@ impl Style for DynamicStyle {
     }
 }
 
+#[derive(Debug)]
 pub struct StandardStyle {
     style_rules: Vec<(String, String)>,
+    class_names_and_attrs: Vec<(HashSet<String>, Attrs)>,
+}
+
+impl StandardStyle {
+    pub fn new(style_rules: Vec<(String, String)>) -> Result<Self> {
+        let mut class_names_and_attrs: Vec<(HashSet<String>, Attrs)> = Vec::new();
+        for (class_names, style_string) in style_rules.clone() {
+            if CLASS_NAMES_REGEX.is_match(&class_names) {
+                let class_names_set: HashSet<String> = class_names
+                    .to_lowercase()
+                    .split_whitespace()
+                    .map(std::string::ToString::to_string)
+                    .collect();
+                let attrs = Attrs::from_style_string(&style_string);
+                class_names_and_attrs.push((class_names_set, attrs));
+            } else {
+                return Err(anyhow::anyhow!("Invalid class name: {}", class_names));
+            }
+        }
+        Ok(Self {
+            style_rules,
+            class_names_and_attrs,
+        })
+    }
+}
+
+impl Style for StandardStyle {
+    fn get_attrs(&self, style_str: &str, default: Attrs) -> Attrs {
+        let mut attrs_vec = vec![default];
+        for (class_names, attrs) in &self.class_names_and_attrs {
+            if !class_names.is_empty() {
+                attrs_vec.push(*attrs);
+            }
+        }
+
+        for part in style_str.split_whitespace() {
+            if let Some(stripped_part) = part.strip_prefix("class:") {
+                warn!("classes not supported yet");
+                let part_without_prefix = &stripped_part.to_lowercase();
+                let _new_class_names: Vec<String> = part_without_prefix
+                    .split(',')
+                    .map(|s| s.trim().to_string())
+                    .collect();
+                // TODO: Combinations....
+            } else {
+                let inline_attrs = Attrs::from_style_string(part);
+                attrs_vec.push(inline_attrs);
+            }
+        }
+
+        Attrs::merge(&attrs_vec)
+    }
+
+    fn style_rules(&self) -> Vec<(String, String)> {
+        self.style_rules.clone()
+    }
+
+    fn invalidation_hash(&self) -> u64 {
+        use std::hash::{Hash, Hasher};
+        let mut hasher = std::collections::hash_map::DefaultHasher::new();
+        for (class_names, attrs) in &self.class_names_and_attrs {
+            for class_name in class_names {
+                class_name.hash(&mut hasher);
+            }
+            let attrs_bytes = format!("{attrs:?}").into_bytes();
+            for byte in attrs_bytes {
+                byte.hash(&mut hasher);
+            }
+        }
+        hasher.finish()
+    }
+}
+
+pub struct MergedStyle {
+    styles: Vec<Box<dyn Style>>,
 }
 
 #[cfg(test)]
@@ -284,38 +309,6 @@ mod test {
     }
 
     #[test]
-    fn test_str_to_ansi_color() {
-        // Test valid colors
-        assert!(matches!(
-            AnsiColor::try_from("ansidefault"),
-            Ok(AnsiColor::Default)
-        ));
-        assert!(matches!(
-            AnsiColor::try_from("ansiblack"),
-            Ok(AnsiColor::Black)
-        ));
-        assert!(matches!(AnsiColor::try_from("ansired"), Ok(AnsiColor::Red)));
-        assert!(matches!(
-            AnsiColor::try_from("ansiblue"),
-            Ok(AnsiColor::Blue)
-        ));
-        assert!(matches!(
-            AnsiColor::try_from("ansibrightred"),
-            Ok(AnsiColor::BrightRed)
-        ));
-        assert!(matches!(
-            AnsiColor::try_from("ansibrightblue"),
-            Ok(AnsiColor::BrightBlue)
-        ));
-
-        // Test invalid colors
-        assert!(AnsiColor::try_from("").is_err());
-        assert!(AnsiColor::try_from("red").is_err());
-        assert!(AnsiColor::try_from("invalid").is_err());
-        assert!(AnsiColor::try_from("bright_red").is_err());
-    }
-
-    #[test]
     fn test_attr_setting_merge() {
         // Test with Automatic as first setting
         assert_eq!(
@@ -349,7 +342,7 @@ mod test {
     #[test]
     fn test_attrs_merge() {
         let attr1 = Attrs {
-            color: Some("red".to_string()),
+            color: Some(Color::Ansi(AnsiColor::Red)),
             background_color: None,
             bold: AttrSetting::Enabled,
             underline: AttrSetting::Automatic,
@@ -362,7 +355,7 @@ mod test {
 
         let attr2 = Attrs {
             color: None,
-            background_color: Some("blue".to_string()),
+            background_color: Some(Color::Ansi(AnsiColor::Blue)),
             bold: AttrSetting::Automatic,
             underline: AttrSetting::Enabled,
             strike: AttrSetting::Enabled,
@@ -374,15 +367,15 @@ mod test {
 
         let merged = Attrs::merge(&[attr1, attr2]);
 
-        assert_eq!(merged.color, Some("red".to_string()));
-        assert_eq!(merged.background_color, Some("blue".to_string()));
+        assert_eq!(merged.color, Some(Color::Ansi(AnsiColor::Red)));
+        assert_eq!(merged.background_color, Some(Color::Ansi(AnsiColor::Blue)));
         assert_eq!(merged.bold, AttrSetting::Enabled);
         assert_eq!(merged.underline, AttrSetting::Enabled);
         assert_eq!(merged.strike, AttrSetting::Enabled);
         assert_eq!(merged.italic, AttrSetting::Disabled);
         assert_eq!(merged.blink, AttrSetting::Disabled);
-        assert_eq!(merged.reverse, AttrSetting::Automatic);
-        assert_eq!(merged.hidden, AttrSetting::Automatic);
+        assert_eq!(merged.reverse, AttrSetting::Disabled);
+        assert_eq!(merged.hidden, AttrSetting::Disabled);
     }
 
     #[test]

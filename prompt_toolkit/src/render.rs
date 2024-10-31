@@ -1,10 +1,16 @@
 #![expect(dead_code)]
 #![expect(unused_variables)]
+#![expect(clippy::unused_self)]
 
 use std::collections::HashMap;
 
+use anyhow::{anyhow, Result};
+
 use crate::{
-    application::Application, layout::Layout, styles::Style, Char, Output, Point, Screen, Size,
+    application::Application,
+    layout::Layout,
+    styles::{Attrs, Style},
+    Char, Output, Point, Screen, Size,
 };
 
 #[derive(Debug)]
@@ -41,20 +47,19 @@ impl<O: Output> Renderer<O> {
     }
 
     pub fn reset(&mut self) {
-        todo!();
+        self.output.flush();
     }
 
     pub fn height_is_known(&self) -> bool {
-        todo!()
+        false
     }
 
     /// Number of rows visible to the terminal above the layout
-    pub fn rows_above_layout(&self) -> usize {
-        todo!()
+    pub fn rows_above_layout(&self) -> Result<usize> {
+        Err(anyhow!("unknown rows above layout"))
     }
 
     /// TODO: handle async flow for Cursor Position Requests/Responses
-    #[expect(clippy::unused_self)]
     pub fn request_absolute_cursor_position(&self) {}
 
     pub fn render(&mut self, app: &Application, layout: &Layout, is_done: bool) {
@@ -116,8 +121,10 @@ pub fn output_screen(output: &mut impl Output, screen: &Screen, size: &Size) -> 
 
         while c <= max_line_len {
             let render_char = row.get(&c).unwrap_or(&default_char);
+            let attrs = Attrs::from_style_string(&render_char.style);
             let char_width = render_char.width;
             current_position = move_cursor(output, size, Point::new(c, y), current_position);
+            output.set_attributes(attrs, crate::output::ColorDepth::True);
             output.write(&render_char.char.to_string());
             current_position.x += char_width;
             c += char_width;

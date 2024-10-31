@@ -140,19 +140,27 @@ impl Output for VT100 {
     }
 
     fn cursor_up(&mut self, count: usize) {
-        self.write_raw(&format!("\x1b[{count}A"));
+        if count > 0 {
+            self.write_raw(&format!("\x1b[{count}A"));
+        }
     }
 
     fn cursor_down(&mut self, count: usize) {
-        self.write_raw(&format!("\x1b[{count}B"));
+        if count > 0 {
+            self.write_raw(&format!("\x1b[{count}B"));
+        }
     }
 
     fn cursor_forward(&mut self, count: usize) {
-        self.write_raw(&format!("\x1b[{count}C"));
+        if count > 0 {
+            self.write_raw(&format!("\x1b[{count}C"));
+        }
     }
 
     fn cursor_back(&mut self, count: usize) {
-        self.write_raw(&format!("\x1b[{count}D"));
+        if count > 0 {
+            self.write_raw(&format!("\x1b[{count}D"));
+        }
     }
 
     fn hide_cursor(&mut self) {

@@ -12,6 +12,7 @@ version = "0.1.0"
 keywords = ["prompt", "cli", "menu"]
 
 [workspace.dependencies]
+anyhow = "1.0.91"
 clap = "4.5.16"
 libc = "0.2.155"
 nix = { version = "0.29", default-features = false, features = ["fs", "ioctl", "poll", "signal", "term"] }

@@ -1,4 +1,4 @@
-use crate::styles::{AnsiColor, Attrs};
+use crate::styles::{AnsiColor, Attrs, Color};
 
 pub struct Size {
     pub rows: usize,
@@ -22,7 +22,7 @@ pub enum CursorShape {
     BlinkingUnderline,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum ColorDepth {
     Monochrome,
     Ansi,
@@ -41,41 +41,29 @@ impl ColorDepth {
         }
     }
 
-    fn rgb(color: &str) -> Option<(u8, u8, u8)> {
-        if let Some(digits) = color
-            .chars()
-            .map(|c| c.to_digit(16))
-            .collect::<Option<Vec<u32>>>()
-        {
-            if digits.len() == 6 {
-                let r = (
-                    u8::try_from(digits[0] * 16 + digits[1]).expect("should never overflow"),
-                    u8::try_from(digits[2] * 16 + digits[3]).expect("should never overflow"),
-                    u8::try_from(digits[4] * 16 + digits[5]).expect("should never overflow"),
-                );
-                Some(r)
-            } else {
-                None
-            }
-        } else {
-            None
-        }
-    }
-
-    fn depth_code_from_rgb(&self, color: &str) -> Vec<String> {
-        let Some((r, g, b)) = Self::rgb(color) else {
-            return Vec::new();
-        };
-
+    fn depth_aware_escape_code(self, color: Color, foreground_info: Option<Color>) -> Vec<String> {
+        let (r, g, b) = color.rgb();
+        let is_background = foreground_info.is_some();
+        let first = if is_background { "48" } else { "38" };
         match self {
             Self::Monochrome => vec![],
             Self::Ansi => {
-                // TODO: find nearest AnsiColor
-                vec![AnsiColor::Black.to_code().to_string()]
+                let exclude = if let Some(foreground_color) = foreground_info {
+                    if color == foreground_color {
+                        vec![foreground_color.closest_ansi()]
+                    } else {
+                        vec![]
+                    }
+                } else {
+                    vec![]
+                };
+                vec![AnsiColor::closest_from_rgb(r, g, b, &exclude)
+                    .code()
+                    .to_string()]
             }
             Self::Default => {
                 vec![
-                    "38".to_string(),
+                    first.to_string(),
                     "5".to_string(),
                     format!(
                         "{}",
@@ -87,7 +75,7 @@ impl ColorDepth {
             }
             Self::True => {
                 vec![
-                    "38".to_string(),
+                    first.to_string(),
                     "2".to_string(),
                     r.to_string(),
                     b.to_string(),
@@ -97,28 +85,31 @@ impl ColorDepth {
         }
     }
 
-    fn colors_to_code(&self, color: &str, is_background: bool) -> Vec<String> {
-        if color.is_empty() || matches!(self, Self::Monochrome) {
-            return Vec::new();
+    fn colors_to_escape_code(self, color: Color, foreground_info: Option<Color>) -> Vec<String> {
+        let is_background = foreground_info.is_some();
+        match (self, color) {
+            (ColorDepth::Monochrome, _) | (_, Color::Default) => vec![],
+            (_, Color::Ansi(ansi_color)) => {
+                vec![(if is_background {
+                    ansi_color.to_background_code()
+                } else {
+                    ansi_color.code()
+                })
+                .to_string()]
+            }
+            // TODO: refactor this, matching self to match again is kind of goofy
+            (_, Color::Hex(_, _, _)) => self.depth_aware_escape_code(color, foreground_info),
         }
-
-        if let Ok(ansi_color) = AnsiColor::try_from(color) {
-            let color = if is_background {
-                ansi_color.to_background_code()
-            } else {
-                ansi_color.to_code()
-            };
-            return vec![color.to_string()];
-        }
-
-        self.depth_code_from_rgb(color)
     }
 
     #[must_use]
-    pub fn escape_code(&self, attrs: Attrs) -> String {
+    pub fn escape_code(self, attrs: Attrs) -> String {
         let mut parts: Vec<String> = Vec::new();
-        parts.extend(self.colors_to_code(&attrs.color.unwrap_or_default(), false));
-        parts.extend(self.colors_to_code(&attrs.background_color.unwrap_or_default(), true));
+        let fg = attrs.color.unwrap_or_default();
+        parts.extend(self.colors_to_escape_code(fg, None));
+        parts.extend(
+            self.colors_to_escape_code(attrs.background_color.unwrap_or_default(), Some(fg)),
+        );
         if attrs.bold.is_on() {
             parts.push("1".to_string());
         }
