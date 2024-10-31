@@ -91,7 +91,7 @@ impl ColorDepth {
             (ColorDepth::Monochrome, _) | (_, Color::Default) => vec![],
             (_, Color::Ansi(ansi_color)) => {
                 vec![(if is_background {
-                    ansi_color.to_background_code()
+                    ansi_color.background_code()
                 } else {
                     ansi_color.code()
                 })

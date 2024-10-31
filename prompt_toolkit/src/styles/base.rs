@@ -237,7 +237,7 @@ impl Style for StandardStyle {
                     .split(',')
                     .map(|s| s.trim().to_string())
                     .collect();
-                // TODO: Combinations....
+                // TODO: Combinations. class lookups
             } else {
                 let inline_attrs = Attrs::from_style_string(part);
                 attrs_vec.push(inline_attrs);

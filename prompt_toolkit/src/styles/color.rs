@@ -190,7 +190,7 @@ impl Color {
     pub fn rgb(self) -> (u8, u8, u8) {
         match self {
             Color::Default => (0, 0, 0),
-            Color::Ansi(ansi_color) => ansi_color.to_rgb(),
+            Color::Ansi(ansi_color) => ansi_color.rgb(),
             Color::Hex(r, g, b) => (r, g, b),
         }
     }
@@ -265,7 +265,7 @@ impl AnsiColor {
             AnsiColor::BrightWhite => 97,
         }
     }
-    pub fn to_background_code(self) -> i32 {
+    pub fn background_code(self) -> i32 {
         match self {
             AnsiColor::Default => 49,
             AnsiColor::Black => 40,
@@ -287,7 +287,7 @@ impl AnsiColor {
         }
     }
 
-    pub fn to_rgb(self) -> (u8, u8, u8) {
+    pub fn rgb(self) -> (u8, u8, u8) {
         match self {
             AnsiColor::Default | AnsiColor::Black => (0, 0, 0), // Default to black
             AnsiColor::Red => (205, 0, 0),
@@ -369,7 +369,7 @@ impl AnsiColor {
                 continue;
             }
 
-            let (r2, g2, b2) = color.to_rgb();
+            let (r2, g2, b2) = color.rgb();
             let (r2, g2, b2) = (i32::from(r2), i32::from(g2), i32::from(b2));
             let score = (r - r2).pow(2) + (g - g2).pow(2) + (b - b2).pow(2);
 
@@ -425,5 +425,156 @@ mod test {
         assert!("red".parse::<AnsiColor>().is_err());
         assert!("invalid".parse::<AnsiColor>().is_err());
         assert!("bright_red".parse::<AnsiColor>().is_err());
+    }
+
+    #[test]
+    fn test_ansi_color_code() {
+        assert_eq!(AnsiColor::Default.code(), 39);
+        assert_eq!(AnsiColor::Black.code(), 30);
+        assert_eq!(AnsiColor::Red.code(), 31);
+        assert_eq!(AnsiColor::Green.code(), 32);
+        assert_eq!(AnsiColor::Yellow.code(), 33);
+        assert_eq!(AnsiColor::Blue.code(), 34);
+        assert_eq!(AnsiColor::Magenta.code(), 35);
+        assert_eq!(AnsiColor::Cyan.code(), 36);
+        assert_eq!(AnsiColor::White.code(), 37);
+        assert_eq!(AnsiColor::BrightBlack.code(), 90);
+        assert_eq!(AnsiColor::BrightRed.code(), 91);
+        assert_eq!(AnsiColor::BrightGreen.code(), 92);
+        assert_eq!(AnsiColor::BrightYellow.code(), 93);
+        assert_eq!(AnsiColor::BrightBlue.code(), 94);
+        assert_eq!(AnsiColor::BrightMagenta.code(), 95);
+        assert_eq!(AnsiColor::BrightCyan.code(), 96);
+        assert_eq!(AnsiColor::BrightWhite.code(), 97);
+    }
+
+    #[test]
+    fn test_ansi_color_background_code() {
+        assert_eq!(AnsiColor::Default.background_code(), 49);
+        assert_eq!(AnsiColor::Black.background_code(), 40);
+        assert_eq!(AnsiColor::Red.background_code(), 41);
+        assert_eq!(AnsiColor::Green.background_code(), 42);
+        assert_eq!(AnsiColor::Yellow.background_code(), 43);
+        assert_eq!(AnsiColor::Blue.background_code(), 44);
+        assert_eq!(AnsiColor::Magenta.background_code(), 45);
+        assert_eq!(AnsiColor::Cyan.background_code(), 46);
+        assert_eq!(AnsiColor::White.background_code(), 47);
+        assert_eq!(AnsiColor::BrightBlack.background_code(), 100);
+        assert_eq!(AnsiColor::BrightRed.background_code(), 101);
+        assert_eq!(AnsiColor::BrightGreen.background_code(), 102);
+        assert_eq!(AnsiColor::BrightYellow.background_code(), 103);
+        assert_eq!(AnsiColor::BrightBlue.background_code(), 104);
+        assert_eq!(AnsiColor::BrightMagenta.background_code(), 105);
+        assert_eq!(AnsiColor::BrightCyan.background_code(), 106);
+        assert_eq!(AnsiColor::BrightWhite.background_code(), 107);
+    }
+
+    #[test]
+    fn test_ansi_color_rgb() {
+        assert_eq!(AnsiColor::Default.rgb(), (0, 0, 0));
+        assert_eq!(AnsiColor::Black.rgb(), (0, 0, 0));
+        assert_eq!(AnsiColor::Red.rgb(), (205, 0, 0));
+        assert_eq!(AnsiColor::Green.rgb(), (0, 205, 0));
+        assert_eq!(AnsiColor::Yellow.rgb(), (205, 205, 0));
+        assert_eq!(AnsiColor::Blue.rgb(), (0, 0, 238));
+        assert_eq!(AnsiColor::Magenta.rgb(), (205, 0, 205));
+        assert_eq!(AnsiColor::Cyan.rgb(), (0, 205, 205));
+        assert_eq!(AnsiColor::White.rgb(), (229, 229, 229));
+        assert_eq!(AnsiColor::BrightBlack.rgb(), (127, 127, 127));
+        assert_eq!(AnsiColor::BrightRed.rgb(), (255, 0, 0));
+        assert_eq!(AnsiColor::BrightGreen.rgb(), (0, 255, 0));
+        assert_eq!(AnsiColor::BrightYellow.rgb(), (255, 255, 0));
+        assert_eq!(AnsiColor::BrightBlue.rgb(), (92, 92, 255));
+        assert_eq!(AnsiColor::BrightMagenta.rgb(), (255, 0, 255));
+        assert_eq!(AnsiColor::BrightCyan.rgb(), (0, 255, 255));
+        assert_eq!(AnsiColor::BrightWhite.rgb(), (255, 255, 255));
+    }
+
+    #[test]
+    fn test_closest_from_rgb() {
+        // TODO: Verify these assertions are valid
+        // Test exact matches
+        assert_eq!(
+            AnsiColor::closest_from_rgb(255, 0, 0, &[]),
+            AnsiColor::BrightRed
+        );
+        assert_eq!(
+            AnsiColor::closest_from_rgb(0, 255, 0, &[]),
+            AnsiColor::BrightGreen
+        );
+        assert_eq!(AnsiColor::closest_from_rgb(0, 0, 255, &[]), AnsiColor::Blue);
+        assert_eq!(AnsiColor::closest_from_rgb(0, 0, 0, &[]), AnsiColor::Black);
+        assert_eq!(
+            AnsiColor::closest_from_rgb(255, 255, 255, &[]),
+            AnsiColor::BrightWhite
+        );
+
+        // Test colors with exclusions
+        assert_eq!(
+            AnsiColor::closest_from_rgb(255, 0, 0, &[AnsiColor::BrightRed]),
+            AnsiColor::Red
+        );
+        assert_eq!(
+            AnsiColor::closest_from_rgb(255, 255, 255, &[AnsiColor::BrightWhite]),
+            AnsiColor::White
+        );
+
+        // Test approximate matches
+        assert_eq!(AnsiColor::closest_from_rgb(180, 0, 0, &[]), AnsiColor::Red);
+        assert_eq!(
+            AnsiColor::closest_from_rgb(100, 100, 100, &[]),
+            AnsiColor::BrightBlack
+        );
+        assert_eq!(
+            AnsiColor::closest_from_rgb(200, 200, 0, &[]),
+            AnsiColor::Yellow
+        );
+
+        // Test colors with multiple exclusions
+        assert_eq!(
+            AnsiColor::closest_from_rgb(255, 0, 0, &[AnsiColor::BrightRed, AnsiColor::Red]),
+            AnsiColor::Yellow
+        );
+    }
+
+    #[test]
+    fn test_str_to_color() {
+        // Test valid colors
+        assert!(matches!(
+            "#aabbcc".parse::<Color>(),
+            Ok(Color::Hex(0xaa, 0xbb, 0xcc))
+        ));
+        assert!(matches!(
+            "#ABC".parse::<Color>(),
+            Ok(Color::Hex(0xaa, 0xbb, 0xcc))
+        ));
+        assert!(matches!("red".parse::<Color>(), Ok(Color::Hex(0xff, 0, 0))));
+        assert!(matches!(
+            "blue".parse::<Color>(),
+            Ok(Color::Hex(0, 0, 0xff))
+        ));
+        assert!(matches!(
+            "green".parse::<Color>(),
+            Ok(Color::Hex(0, 0x80, 0))
+        ));
+        assert!(matches!(
+            "ansired".parse::<Color>(),
+            Ok(Color::Ansi(AnsiColor::Red))
+        ));
+        assert!(matches!("default".parse::<Color>(), Ok(Color::Default)));
+        assert!(matches!("".parse::<Color>(), Ok(Color::Default)));
+
+        // Test invalid colors
+        assert!("invalid".parse::<Color>().is_err());
+        assert!("#12".parse::<Color>().is_err());
+        assert!("#1234567".parse::<Color>().is_err());
+        assert!("#ghi".parse::<Color>().is_err());
+    }
+
+    #[test]
+    fn test_color_rgb() {
+        assert_eq!(Color::Default.rgb(), (0, 0, 0));
+        assert_eq!(Color::Ansi(AnsiColor::Red).rgb(), (205, 0, 0));
+        assert_eq!(Color::Hex(0x12, 0x34, 0x56).rgb(), (0x12, 0x34, 0x56));
     }
 }
