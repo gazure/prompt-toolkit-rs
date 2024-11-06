@@ -66,6 +66,15 @@ impl Filter {
     }
 }
 
+impl From<bool> for Filter {
+    fn from(value: bool) -> Self {
+        match value {
+            false => Filter::Always,
+            true => Filter::Never,
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;

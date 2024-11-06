@@ -224,7 +224,7 @@ impl Output for VT100 {
         }
     }
 
-    fn get_default_color_depth() -> super::ColorDepth {
-        todo!()
+    fn get_default_color_depth(&self) -> super::ColorDepth {
+        super::ColorDepth::Default
     }
 }

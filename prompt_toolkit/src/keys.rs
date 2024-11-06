@@ -1,8 +1,7 @@
-#![expect(dead_code)]
 
 use std::{collections::HashMap, sync::LazyLock};
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum Keys {
     Character(char),
     Escape,

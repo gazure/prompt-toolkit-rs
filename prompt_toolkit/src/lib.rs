@@ -1,14 +1,14 @@
 #![deny(clippy::pedantic)]
 #![expect(clippy::module_name_repetitions)]
 
-pub(crate) mod clipboard;
-pub(crate) mod filters;
-pub(crate) mod key_bindings;
-pub(crate) mod keys;
-pub(crate) mod layout;
 pub(crate) mod screen;
 pub(crate) mod styles;
 
+pub mod key_bindings;
+pub mod keys;
+pub mod filters;
+pub mod clipboard;
+pub mod layout;
 pub mod application;
 pub mod input;
 pub mod output;

@@ -171,7 +171,7 @@ pub trait Output {
     fn supports_cursor_position_requests(&self) -> bool;
     fn request_cursor_position(&mut self);
     fn get_size(&self) -> Size;
-    fn get_default_color_depth() -> ColorDepth;
+    fn get_default_color_depth(&self) -> ColorDepth;
 }
 
 pub struct DummyOutput;
@@ -248,7 +248,7 @@ impl Output for DummyOutput {
         }
     }
 
-    fn get_default_color_depth() -> ColorDepth {
+    fn get_default_color_depth(&self) -> ColorDepth {
         ColorDepth::Monochrome
     }
 }
