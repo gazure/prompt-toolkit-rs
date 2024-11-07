@@ -122,7 +122,7 @@ impl Parser {
                                 c.to_string(),
                                 &mut result,
                             );
-                            self.prefix = chars.collect()
+                            self.prefix = chars.collect();
                         }
                     }
                 }

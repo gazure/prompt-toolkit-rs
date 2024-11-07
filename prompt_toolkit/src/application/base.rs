@@ -98,7 +98,7 @@ impl Application {
         let size = self.output.get_size();
         let mut screen = Screen::new(None, size.columns, 10);
         let mut wp = WritePosition::new(0, 0, size.columns, 1);
-        let data = format!("You entered (raw mode not enabled): {}", additional);
+        let data = format!("You entered (raw mode not enabled): {additional}");
         screen.direct_draw(&wp, &data, "bold");
         wp.ypos += 1;
         screen.direct_draw(&wp, "italic", "italic");

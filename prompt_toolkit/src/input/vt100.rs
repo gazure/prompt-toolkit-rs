@@ -1,7 +1,7 @@
 #![expect(dead_code)]
 
-use std::os::fd::RawFd;
 use nix::sys::termios::Termios;
+use std::os::fd::RawFd;
 use tracing::warn;
 
 use crate::input::{
@@ -66,13 +66,13 @@ impl Input for VT100 {
 
     fn to_cooked_mode(&mut self, original_mode: Option<Termios>) {
         let original_mode = original_mode.unwrap();
-        termios::disable_raw_mode(self.in_fd, &original_mode).expect("expected cooked mode to work");
+        termios::disable_raw_mode(self.in_fd, &original_mode)
+            .expect("expected cooked mode to work");
     }
 }
 
 mod termios {
     /// Lifted from Rustyline
-
     use anyhow::Result;
     use nix::sys::termios::{self, SetArg, SpecialCharacterIndices as SCI, Termios};
     use std::os::unix::io::{BorrowedFd, RawFd};
@@ -132,7 +132,6 @@ mod termios {
     //     key_map.insert(key, cmd);
     // }
 }
-
 
 #[cfg(test)]
 mod test {

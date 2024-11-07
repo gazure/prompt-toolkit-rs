@@ -7,6 +7,7 @@ pub enum Filter {
 }
 
 impl Filter {
+    #[must_use]
     pub fn eval(&self) -> bool {
         match self {
             Filter::Never => false,
@@ -15,6 +16,7 @@ impl Filter {
         }
     }
 
+    #[must_use]
     pub fn and(self, other: Filter) -> Filter {
         match self {
             Filter::Always => other,
@@ -33,6 +35,7 @@ impl Filter {
         }
     }
 
+    #[must_use]
     pub fn or(self, other: Filter) -> Filter {
         match self {
             Filter::Always => Filter::Always,
@@ -51,6 +54,7 @@ impl Filter {
         }
     }
 
+    #[must_use]
     pub fn invert(self) -> Filter {
         match self {
             Filter::Always => Filter::Never,
@@ -68,9 +72,10 @@ impl Filter {
 
 impl From<bool> for Filter {
     fn from(value: bool) -> Self {
-        match value {
-            false => Filter::Always,
-            true => Filter::Never,
+        if value {
+            Filter::Always
+        } else {
+            Filter::Never
         }
     }
 }
@@ -83,6 +88,15 @@ mod test {
     fn test_basic_filters() {
         assert!(!Filter::Never.eval());
         assert!(Filter::Always.eval());
+    }
+
+    #[test]
+    fn test_from_bool() {
+        let f = Filter::from(true);
+        assert!(f.eval());
+
+        let f = Filter::from(false);
+        assert!(!f.eval());
     }
 
     #[test]

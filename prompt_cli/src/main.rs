@@ -1,7 +1,10 @@
 use std::path::PathBuf;
 
 use prompt_toolkit::{
-    application::Application, clipboard::Clipboard, key_bindings::{EchoBinding, KeyBindings}, output::ColorDepth
+    application::Application,
+    clipboard::Clipboard,
+    key_bindings::{EchoBinding, KeyBindings},
+    output::ColorDepth,
 };
 use tracing::Level;
 use tracing_appender::rolling::Rotation;
@@ -25,12 +28,17 @@ fn main() {
     use_application();
 }
 
-
 fn use_application() {
     let mut key_bindings = KeyBindings::new();
     key_bindings.add_for_all_keys(Box::new(EchoBinding));
     let clipboard = Clipboard;
-    let mut app = Application::new(prompt_toolkit::layout::Layout,
-        key_bindings, clipboard, ColorDepth::True, false, prompt_toolkit::filters::Filter::Always);
+    let mut app = Application::new(
+        prompt_toolkit::layout::Layout,
+        key_bindings,
+        clipboard,
+        ColorDepth::True,
+        false,
+        prompt_toolkit::filters::Filter::Always,
+    );
     app.run();
 }

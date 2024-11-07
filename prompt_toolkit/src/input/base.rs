@@ -1,5 +1,4 @@
 use crate::keys::Keys;
-use anyhow::{anyhow, Result};
 use nix::sys::termios::Termios;
 
 #[derive(Debug)]
@@ -119,11 +118,31 @@ impl Input for RawTermGuard<'_> {
         self.input.closed()
     }
 
-    fn to_raw_mode(&mut self) -> Option<Termios> { None }
+    fn to_raw_mode(&mut self) -> Option<Termios> {
+        None
+    }
 
     fn raw_mode(&mut self) -> RawTermGuard {
         panic!("can't do this twice")
     }
 
-    fn to_cooked_mode(&mut self, original_mode: Option<Termios>) {}
+    fn to_cooked_mode(&mut self, _original_mode: Option<Termios>) {}
+}
+#[cfg(test)]
+pub mod tests {
+    use super::*;
+
+    #[test]
+    fn test_dummy_input() {
+        let mut di = DummyInput;
+        assert_eq!(di.fileno(), -1);
+        assert_eq!(di.typeahead_hash(), String::default());
+        assert_eq!(di.read_keys(), vec![]);
+        assert_eq!(di.flush_keys(), vec![]);
+        assert!(di.closed());
+        assert_eq!(di.to_raw_mode(), None);
+        di.to_cooked_mode(None);
+        let raw_term = di.raw_mode();
+        assert_eq!(raw_term.fileno(), -1);
+    }
 }

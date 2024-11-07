@@ -4,13 +4,13 @@
 pub(crate) mod screen;
 pub(crate) mod styles;
 
+pub mod application;
+pub mod clipboard;
+pub mod filters;
+pub mod input;
 pub mod key_bindings;
 pub mod keys;
-pub mod filters;
-pub mod clipboard;
 pub mod layout;
-pub mod application;
-pub mod input;
 pub mod output;
 pub mod render;
 pub mod shortcuts;

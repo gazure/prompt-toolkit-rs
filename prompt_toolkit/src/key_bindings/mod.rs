@@ -1,3 +1,3 @@
 mod base;
 
-pub use base::{KeyBindings, Binding, EchoBinding, KeyProcessor, KeyPressEvent};
+pub use base::{Binding, EchoBinding, KeyBindings, KeyPressEvent, KeyProcessor};
