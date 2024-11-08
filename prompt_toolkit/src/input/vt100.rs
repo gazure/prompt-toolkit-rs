@@ -198,7 +198,10 @@ mod test {
         let mut vt = VT100::new(fd);
         let key_presses = vt.read_keys();
         assert_eq!(key_presses.len(), test_data.len());
-        let s: String = key_presses.iter().map(super::super::base::KeyPress::text).collect();
+        let s: String = key_presses
+            .iter()
+            .map(super::super::base::KeyPress::text)
+            .collect();
         assert_eq!(s, "hello world this is an arbitrary input from a FD");
     }
 
