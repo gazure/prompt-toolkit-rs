@@ -65,9 +65,10 @@ impl Input for VT100 {
     }
 
     fn to_cooked_mode(&mut self, original_mode: Option<Termios>) {
-        let original_mode = original_mode.unwrap();
-        termios::disable_raw_mode(self.in_fd, &original_mode)
-            .expect("expected cooked mode to work");
+        if let Some(original_mode) = original_mode {
+            termios::disable_raw_mode(self.in_fd, &original_mode)
+                .expect("expected cooked mode to work");
+        }
     }
 }
 
@@ -136,6 +137,8 @@ mod termios {
 #[cfg(test)]
 mod test {
 
+    use std::{io::Seek, os::fd::AsRawFd};
+
     use super::*;
     use crate::keys::Keys;
 
@@ -169,5 +172,39 @@ mod test {
         let mut vt = VT100::new(0);
         let keys = vt.parser.feed("\x1b[");
         assert_eq!(keys, vec![]);
+    }
+
+    #[test]
+    fn test_raw_mode() {
+        let mut vt = VT100::new(0);
+        let guard = vt.raw_mode();
+        drop(guard);
+    }
+
+    #[test]
+    fn test_with_temp_file() {
+        use std::io::Write;
+        use tempfile::tempfile;
+
+        let test_data = "hello world this is an arbitrary input from a FD";
+        let mut file = tempfile().unwrap();
+
+        file.write_all(test_data.as_bytes()).unwrap();
+        file.flush().expect("expected flush to work");
+        file.seek(std::io::SeekFrom::Start(0)).unwrap();
+
+        let fd = file.as_raw_fd();
+
+        let mut vt = VT100::new(fd);
+        let key_presses = vt.read_keys();
+        assert_eq!(key_presses.len(), test_data.len());
+        let s: String = key_presses.iter().map(super::super::base::KeyPress::text).collect();
+        assert_eq!(s, "hello world this is an arbitrary input from a FD");
+    }
+
+    #[test]
+    fn test_closed() {
+        let vt = VT100::new(0);
+        assert!(!vt.closed());
     }
 }

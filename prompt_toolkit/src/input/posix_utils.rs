@@ -70,3 +70,54 @@ impl PosixStdinReader {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use io::Seek;
+    use std::io::Write;
+    use std::os::unix::io::AsRawFd;
+    use tempfile::tempfile;
+
+    use super::*;
+
+    #[test]
+    fn test_new_reader() {
+        let stdin = io::stdin();
+        let fd = stdin.as_raw_fd();
+        let reader = PosixStdinReader::new(fd);
+        assert!(!reader.closed());
+    }
+
+    #[test]
+    fn test_closed_reader() {
+        let stdin = io::stdin();
+        let fd = stdin.as_raw_fd();
+        let mut reader = PosixStdinReader::new(fd);
+        reader.closed = true;
+        assert!(reader.closed());
+        assert_eq!(reader.read(1024).unwrap(), String::default());
+    }
+
+    #[test]
+    fn test_read_empty() {
+        let stdin = io::stdin();
+        let fd = stdin.as_raw_fd();
+        let mut reader = PosixStdinReader::new(fd);
+        assert_eq!(reader.read(1024).unwrap(), String::default());
+    }
+
+    #[test]
+    fn test_read_from_temp_file() {
+        let mut file = tempfile().unwrap();
+        let test_data = "hello world";
+        file.write_all(test_data.as_bytes()).unwrap();
+        file.flush().expect("expected flush to work");
+        file.seek(std::io::SeekFrom::Start(0)).unwrap();
+
+        let fd = file.as_raw_fd();
+        let mut reader = PosixStdinReader::new(fd);
+
+        let result = reader.read(1024).unwrap();
+        assert_eq!(result, test_data);
+    }
+}

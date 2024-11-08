@@ -20,3 +20,6 @@ nix = { workspace = true, default-features = false, features = [
     "term",
 ] }
 utf8-decode = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }
