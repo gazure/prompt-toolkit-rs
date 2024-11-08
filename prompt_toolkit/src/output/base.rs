@@ -22,10 +22,11 @@ pub enum CursorShape {
     BlinkingUnderline,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub enum ColorDepth {
     Monochrome,
     Ansi,
+    #[default]
     Default,
     True,
 }

@@ -71,14 +71,22 @@ impl Application {
         }
     }
 
+    pub fn set_input(&mut self, input: Box<dyn Input>) {
+        self.input = input;
+    }
+
+    pub fn set_output(&mut self, output: Box<dyn Output>) {
+        self.output = output;
+    }
+
     #[must_use]
     pub fn color_depth(&self) -> ColorDepth {
         self.color_depth
     }
 
-    pub fn run(&mut self) {
+    pub fn run(&mut self, wait_for: u64) {
         self.output.set_title("Prompt Toolkit mini-demo");
-        std::thread::sleep(std::time::Duration::from_secs(5));
+        std::thread::sleep(std::time::Duration::from_secs(wait_for));
 
         let mut raw_input = self.input.raw_mode();
 
@@ -128,5 +136,49 @@ impl Application {
         screen.direct_draw(&wp, "<- there is hidden text there", "nohidden");
 
         render::output_screen(self.output.as_mut(), &screen, &size);
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use std::io::{Read, Seek};
+
+    use super::*;
+    use tempfile::tempfile;
+
+    #[test]
+    fn test_new_application() {
+        let layout = Layout;
+        let key_bindings = KeyBindings::new();
+        let clipboard = Clipboard;
+        let color_depth = ColorDepth::default();
+
+        let mut app = Application::new(
+            layout,
+            key_bindings,
+            clipboard,
+            color_depth,
+            false,
+            Filter::default(),
+        );
+
+        let input = tempfile().expect("input temp file");
+        let input = VT100Input::new(input.into_raw_fd());
+        app.set_input(Box::new(input));
+
+        let output = tempfile().expect("output temp file");
+        let mut output_clone = output.try_clone().expect("cloned output temp file");
+        let output = VT100Output::new(output.into_raw_fd());
+        app.set_output(Box::new(output));
+
+        assert_eq!(app.color_depth(), ColorDepth::default());
+        app.run(0);
+
+        output_clone.seek(std::io::SeekFrom::Start(0)).unwrap();
+        let mut output_str = String::new();
+        output_clone.read_to_string(&mut output_str).unwrap();
+
+        // since output is not a tty, uncertain term size values should swallow the content of the default app
+        assert_eq!(output_str, "\u{1b}]2;Prompt Toolkit mini-demo\u{7}\u{1b}[?25l\u{1b}[?7l\u{1b}[0m\u{1b}[?25l\u{1b}[?25h");
     }
 }

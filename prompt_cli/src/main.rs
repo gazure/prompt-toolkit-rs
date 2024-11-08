@@ -40,5 +40,5 @@ fn use_application() {
         false,
         prompt_toolkit::filters::Filter::Always,
     );
-    app.run();
+    app.run(5);
 }

@@ -1,9 +1,13 @@
 #![allow(dead_code)]
 
+#[derive(Default)]
 pub enum Filter {
+    #[default]
     Never,
     Always,
-    Condition { func: Box<dyn Fn() -> bool> },
+    Condition {
+        func: Box<dyn Fn() -> bool>,
+    },
 }
 
 impl Filter {
