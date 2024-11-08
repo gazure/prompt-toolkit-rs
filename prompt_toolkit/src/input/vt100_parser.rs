@@ -114,13 +114,15 @@ impl Parser {
                     }
 
                     if !found {
-                        if let Some(c) = self.prefix.chars().next() {
+                        let prefix = self.prefix.clone();
+                        let mut chars = prefix.chars();
+                        if let Some(c) = chars.next() {
                             self.handler(
                                 Some(vec![Keys::Character(c)]),
                                 c.to_string(),
                                 &mut result,
                             );
-                            self.prefix = self.prefix[1..].to_string();
+                            self.prefix = chars.collect();
                         }
                     }
                 }

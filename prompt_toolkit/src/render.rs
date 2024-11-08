@@ -74,7 +74,7 @@ fn get_max_column_index(row: &HashMap<usize, Char>, width: usize) -> usize {
 }
 
 fn move_cursor(
-    output: &mut impl Output,
+    output: &mut dyn Output,
     size: &Size,
     new: Point,
     mut current_position: Point,
@@ -102,7 +102,7 @@ fn move_cursor(
     new
 }
 
-pub fn output_screen(output: &mut impl Output, screen: &Screen, size: &Size) -> Point {
+pub fn output_screen(output: &mut dyn Output, screen: &Screen, size: &Size) -> Point {
     let mut current_position = Point::new(0, 0);
     output.hide_cursor();
     output.disable_autowrap();

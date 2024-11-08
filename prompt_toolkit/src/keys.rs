@@ -1,8 +1,6 @@
-#![expect(dead_code)]
-
 use std::{collections::HashMap, sync::LazyLock};
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum Keys {
     Character(char),
     Escape,
@@ -161,6 +159,7 @@ pub enum Keys {
 
 impl Keys {
     #[allow(clippy::too_many_lines)]
+    #[must_use]
     pub fn as_str(self) -> &'static str {
         match self {
             Keys::Character(_) => "",
