@@ -123,7 +123,7 @@ impl Input for RawTermGuard<'_> {
     }
 
     fn raw_mode(&mut self) -> RawTermGuard {
-        panic!("can't do this twice")
+        panic!("input already in raw mode")
     }
 
     fn to_cooked_mode(&mut self, _original_mode: Option<Termios>) {}

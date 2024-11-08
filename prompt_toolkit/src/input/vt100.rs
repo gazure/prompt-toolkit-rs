@@ -138,6 +138,7 @@ mod termios {
 mod test {
 
     use std::{io::Seek, os::fd::AsRawFd};
+    use tempfile::tempfile;
 
     use super::*;
     use crate::keys::Keys;
@@ -176,27 +177,40 @@ mod test {
 
     #[test]
     fn test_raw_mode() {
-        let mut vt = VT100::new(0);
-        let guard = vt.raw_mode();
+        let mut vt = VT100::new(tempfile().expect("temp file").as_raw_fd());
+        let mut guard = vt.raw_mode();
+        let keys = guard.read_keys();
+        guard.flush_keys();
+        assert!(keys.is_empty());
+        assert!(guard.closed());
+
         drop(guard);
+    }
+
+    #[test]
+    #[should_panic(expected = "input already in raw mode")]
+    fn test_raw_term_guard_should_panic() {
+        let mut vt = VT100::new(tempfile().expect("temp file").as_raw_fd());
+        let mut guard = RawTermGuard::new(&mut vt);
+        guard.raw_mode();
     }
 
     #[test]
     fn test_with_temp_file() {
         use std::io::Write;
-        use tempfile::tempfile;
 
         let test_data = "hello world this is an arbitrary input from a FD";
-        let mut file = tempfile().unwrap();
+        let mut file = tempfile().expect("temp file error");
 
-        file.write_all(test_data.as_bytes()).unwrap();
+        file.write_all(test_data.as_bytes()).expect("write error");
         file.flush().expect("expected flush to work");
-        file.seek(std::io::SeekFrom::Start(0)).unwrap();
+        file.seek(std::io::SeekFrom::Start(0)).expect("seek error");
 
         let fd = file.as_raw_fd();
 
         let mut vt = VT100::new(fd);
         let key_presses = vt.read_keys();
+        vt.flush_keys();
         assert_eq!(key_presses.len(), test_data.len());
         let s: String = key_presses
             .iter()

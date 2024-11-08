@@ -174,9 +174,13 @@ mod test {
         assert_eq!(app.color_depth(), ColorDepth::default());
         app.run(0);
 
-        output_clone.seek(std::io::SeekFrom::Start(0)).unwrap();
+        output_clone
+            .seek(std::io::SeekFrom::Start(0))
+            .expect("seek error");
         let mut output_str = String::new();
-        output_clone.read_to_string(&mut output_str).unwrap();
+        output_clone
+            .read_to_string(&mut output_str)
+            .expect("read error");
 
         // since output is not a tty, uncertain term size values should swallow the content of the default app
         assert_eq!(output_str, "\u{1b}]2;Prompt Toolkit mini-demo\u{7}\u{1b}[?25l\u{1b}[?7l\u{1b}[0m\u{1b}[?25l\u{1b}[?25h");

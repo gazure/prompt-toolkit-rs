@@ -95,7 +95,7 @@ mod tests {
         let mut reader = PosixStdinReader::new(fd);
         reader.closed = true;
         assert!(reader.closed());
-        assert_eq!(reader.read(1024).unwrap(), String::default());
+        assert_eq!(reader.read(1024).expect("read error"), String::default());
     }
 
     #[test]
@@ -103,21 +103,21 @@ mod tests {
         let stdin = io::stdin();
         let fd = stdin.as_raw_fd();
         let mut reader = PosixStdinReader::new(fd);
-        assert_eq!(reader.read(1024).unwrap(), String::default());
+        assert_eq!(reader.read(1024).expect("read error"), String::default());
     }
 
     #[test]
     fn test_read_from_temp_file() {
-        let mut file = tempfile().unwrap();
+        let mut file = tempfile().expect("temp file");
         let test_data = "hello world";
-        file.write_all(test_data.as_bytes()).unwrap();
+        file.write_all(test_data.as_bytes()).expect("write error");
         file.flush().expect("expected flush to work");
-        file.seek(std::io::SeekFrom::Start(0)).unwrap();
+        file.seek(std::io::SeekFrom::Start(0)).expect("seek error");
 
         let fd = file.as_raw_fd();
         let mut reader = PosixStdinReader::new(fd);
 
-        let result = reader.read(1024).unwrap();
+        let result = reader.read(1024).expect("read error");
         assert_eq!(result, test_data);
     }
 }
